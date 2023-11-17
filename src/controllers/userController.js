@@ -7,7 +7,7 @@ const userController = {
       const users = await User.find();
       res.status(200).json(users);
     } catch (error) {
-      res.status(500).json(error);
+      return res.status(500).json(error);
     }
   },
 
@@ -16,7 +16,7 @@ const userController = {
       const user = User.findById(req.params.id);
       res.status(200).json("Delete Successfully!");
     } catch (error) {
-      res.status(500).json(error);
+      return res.status(500).json(error);
     }
   },
 };
