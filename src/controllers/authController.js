@@ -100,7 +100,7 @@ const authController = {
         path: "/",
         sameSite: "strict",
       });
-      res.status(200).json({ accessToken: newAccessToken });
+      return res.status(200).json({ accessToken: newAccessToken });
     });
   },
   logoutUser: async (req, res) => {
@@ -108,7 +108,7 @@ const authController = {
     refreshTokens = refreshTokens.filter(
       (token) => token !== req.cookies.refreshToken
     );
-    res.status(200).json("Logged out successfully!");
+    return res.status(200).json("Logged out successfully!");
   },
 };
 

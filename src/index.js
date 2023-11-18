@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 const warehouseRoute = require("./routes/warehouseRoute");
 const authRoute = require("./routes/authRoute");
 const userRoute = require("./routes/userRoute");
+const productRoute = require("./routes/productRoute");
 const cookieParser = require("cookie-parser");
 
 //Connect DB
@@ -31,6 +32,7 @@ app.use(cookieParser());
 app.use("/api/warehouse", warehouseRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/user", userRoute);
+app.use("/api/product", productRoute);
 
 app.listen(port, () => {
   console.log("Server is running in port ", +port);

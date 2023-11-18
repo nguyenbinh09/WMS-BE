@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const generatePassword = require("generate-password");
 const bcrypt = require("bcrypt");
+const { mailTransport, UserPassword } = require("../utils/mail");
+const dotenv = require("dotenv").config();
 
 const userSchema = new mongoose.Schema(
   {
@@ -24,8 +26,8 @@ const userSchema = new mongoose.Schema(
         const salt = bcrypt.genSaltSync(saltRounds);
         const hashedPassword = bcrypt.hashSync(randomPassword, salt);
         // mailTransport().sendMail({
-        //   from: "AdminWMS@gmail.com",
-        //   to: this.email,
+        //   from: "nguyenthaibinh810@gmail.com",
+        //   to: "21521878@gm.uit.edu.com",
         //   subject: "Your Password",
         //   html: UserPassword(randomPassword),
         // });
