@@ -3,14 +3,15 @@ const mongoose = require("mongoose");
 const contactInfoSchema = new mongoose.Schema({
   address: {
     type: String,
-    required: true,
+    required: [true, "Address is missing"],
   },
   phone_num: {
     type: String,
-    required: true,
+    required: [true, "Phone number is missing"],
   },
   email: {
     type: String,
+    required: [true, "Phone number is missing"],
   },
 });
 
