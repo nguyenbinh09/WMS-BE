@@ -35,14 +35,21 @@ const userSchema = new mongoose.Schema(
         return hashedPassword;
       },
     },
-    role: {
-      type: String,
+    isEmployee: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
     employee_id: {
       type: String,
       ref: "Employee",
       required: true,
       unique: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
   },
   { timestamps: true }

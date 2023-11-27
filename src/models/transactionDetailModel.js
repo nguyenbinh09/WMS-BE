@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const transactionDetailModel = new mongoose.Schema({
+const transactionDetailSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: [true, "Quantity is missing"],

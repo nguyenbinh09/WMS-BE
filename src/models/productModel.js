@@ -19,6 +19,11 @@ const productSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: [true, "Quantity is missing"],
+    default: 0,
+  },
+  maximumQuantity: {
+    type: Number,
+    required: [true, "Maximum quantity is missing"],
   },
   price: {
     type: Number,
@@ -44,9 +49,14 @@ const productSchema = new mongoose.Schema({
     ref: "Warehouse",
   },
   supplierId: {
-    type: mongoose.Types.ObjectId,
+    type: String, //mongoose.Types.ObjectId,
     required: true,
-    ref: "Supplier",
+    //ref: "Supplier",
+  },
+  isDeleted: {
+    type: Boolean,
+    required: true,
+    default: false,
   },
 });
 

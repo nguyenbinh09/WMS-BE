@@ -6,9 +6,9 @@ const skuCodeGenerator = async (name, warehouseId) => {
   const warehouse = await Warehouse.findOne({ _id: warehouseId });
 
   const secondValue = warehouse.code.substring(0, 2);
-  const productAmount = await Product.countDocuments();
-  const num1 = String(productAmount).padStart(4, "0");
-  const sku = firstValue + secondValue + num1;
+  const productAmount = await Product.countDocuments({ isDeleted: false });
+  const count = String(productAmount).padStart(4, "0");
+  const sku = firstValue + count + secondValue;
   const sku1 = sku.toUpperCase();
   return sku1;
 };
@@ -18,7 +18,7 @@ const productController = {
     try {
       const {
         name,
-        quantity,
+        maximumQuantity,
         price,
         unit,
         specification,
@@ -28,7 +28,7 @@ const productController = {
       const newProduct = new Product({
         name,
         skuCode: await skuCodeGenerator(name, warehouseId),
-        quantity,
+        maximumQuantity,
         price,
         unit,
         specification,
@@ -44,6 +44,14 @@ const productController = {
   getAllProducts: async (req, res) => {
     try {
       const products = await Product.find();
+      res.status(200).json(products);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+  getAProduct: async (req, res) => {
+    try {
+      const products = await Product.findById(req.params.id);
       res.status(200).json(products);
     } catch (error) {
       return res.status(500).json(error);

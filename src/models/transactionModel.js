@@ -16,7 +16,8 @@ const transactionSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: "Updating",
+      enum: ["Order", "Delivery", "Done", "Returned"],
+      default: "Order",
     },
     total: {
       type: Number,
@@ -25,21 +26,17 @@ const transactionSchema = new mongoose.Schema(
     type: {
       type: String,
       required: [true, "type is missing"],
+      enum: ["Inbound", "Outbound"],
     },
     employeeId: {
       type: mongoose.Types.ObjectId,
       required: [true, "Employee id is missing"],
       ref: "Employee",
     },
-    supplierId: {
-      type: mongoose.Types.ObjectId,
-      required: [true, "Supplier id is missing"],
-      ref: "Supplier",
-    },
-    customerId: {
-      type: mongoose.Types.ObjectId,
-      required: [true, "Customer id is missing"],
-      ref: "Customer",
+    partnerId: {
+      type: String, //mongoose.Types.ObjectId,
+      required: [true, "Partner id is missing"],
+      // ref: "Partner",
     },
     warehouseId: {
       type: mongoose.Types.ObjectId,

@@ -9,7 +9,8 @@ const authRoute = require("./routes/authRoute");
 const userRoute = require("./routes/userRoute");
 const productRoute = require("./routes/productRoute");
 const cookieParser = require("cookie-parser");
-
+const employeeRoute = require("./routes/employeeRoute");
+const transactionRoute = require("./routes/transactionRoute");
 //Connect DB
 mongoose
   .connect(process.env.MONGODB_URL)
@@ -33,7 +34,8 @@ app.use("/api/warehouse", warehouseRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/user", userRoute);
 app.use("/api/product", productRoute);
-
+app.use("/api/employee", employeeRoute);
+app.use("/api/transaction", transactionRoute);
 app.listen(port, () => {
   console.log("Server is running in port ", +port);
 });
