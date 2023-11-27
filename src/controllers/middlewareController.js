@@ -20,7 +20,7 @@ const middlewareController = {
 
   authorizeAdmin: (req, res, next) => {
     middlewareController.verifyToken(req, res, () => {
-      if (req.user.role == "admin") {
+      if (req.user.isEmployee !== true) {
         next();
       } else {
         return res.status(403).json("You're not allowed to delete other");

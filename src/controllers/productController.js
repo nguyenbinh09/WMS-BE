@@ -1,3 +1,4 @@
+const Partner = require("../models/partnerModel");
 const Product = require("../models/productModel");
 const Warehouse = require("../models/warehouseModel");
 
@@ -25,6 +26,16 @@ const productController = {
         warehouseId,
         supplierId,
       } = req.body;
+      const supplier = await Partner.findById(supplierId);
+      if (!supplier)
+        return res
+          .status(404)
+          .send(`The supplier with id ${supplierId} does not exists`);
+      else if (supplier.isDeleted === true) {
+        return res
+          .status(410)
+          .send(`Supplier with id ${supplierId} is deleted`);
+      }
       const newProduct = new Product({
         name,
         skuCode: await skuCodeGenerator(name, warehouseId),
@@ -36,11 +47,16 @@ const productController = {
         supplierId,
       });
       const savedProduct = await newProduct.save();
-      res.status(200).json(savedProduct);
+      await supplier.updateOne({ $push: { products: savedProduct._id } });
+      res.status(201).json({
+        success: true,
+        message: `New product ${savedProduct.code} created successfully!`,
+      });
     } catch (error) {
       return res.status(500).json(error);
     }
   },
+
   getAllProducts: async (req, res) => {
     try {
       const products = await Product.find();
@@ -49,6 +65,7 @@ const productController = {
       return res.status(500).json(error);
     }
   },
+
   getAProduct: async (req, res) => {
     try {
       const products = await Product.findById(req.params.id);
@@ -57,6 +74,8 @@ const productController = {
       return res.status(500).json(error);
     }
   },
+
+  updateProduct: async (req, res) => {},
 };
 
 module.exports = productController;

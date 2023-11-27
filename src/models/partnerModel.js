@@ -13,12 +13,19 @@ const partnerSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, "Type is missing"],
+    enum: ["Customer", "Supplier"],
   },
   contactId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: "ContactInfo",
   },
+  products: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    },
+  ],
   isDeleted: {
     type: Boolean,
     required: true,

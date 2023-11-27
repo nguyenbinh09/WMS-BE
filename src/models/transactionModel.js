@@ -34,9 +34,9 @@ const transactionSchema = new mongoose.Schema(
       ref: "Employee",
     },
     partnerId: {
-      type: String, //mongoose.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       required: [true, "Partner id is missing"],
-      // ref: "Partner",
+      ref: "Partner",
     },
     warehouseId: {
       type: mongoose.Types.ObjectId,
