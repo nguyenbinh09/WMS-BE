@@ -1,23 +1,61 @@
+const Employee = require("../models/employeeModel");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const generatePassword = require("generate-password");
+const bcrypt = require("bcrypt");
+const { mailTransport, UserPassword } = require("../utils/mail");
 
 const dotenv = require("dotenv").config();
 
 let refreshTokens = [];
+const generatePasswordAuto = (email) => {
+  const randomPassword = generatePassword.generate({
+    length: 10,
+    numbers: true,
+  });
+  const saltRounds = 10;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hashedPassword = bcrypt.hashSync(randomPassword, salt);
+  mailTransport().sendMail({
+    from: "nguyenthaibinh810@gmail.com",
+    to: email,
+    subject: "Your Password",
+    html: UserPassword(randomPassword),
+  });
+
+  return hashedPassword;
+};
+
 const authController = {
   //REGISTER
   registerUser: async (req, res) => {
     try {
+      const { employeeId } = req.body;
+      const employee = await Employee.findById(employeeId).populate(
+        "contactId"
+      );
+      if (!employee)
+        return res
+          .status(404)
+          .send(`The employee with id ${employeeId} does not exists`);
+      else if (employee.isDeleted === true) {
+        return res
+          .status(410)
+          .send(`Employee with id ${employeeId} is deleted`);
+      }
+      console.log(employee.contactId.email);
       //Create new user
       const newUser = new User({
-        username: req.body.username,
-        role: req.body.role,
-        employee_id: req.body.employee_id,
+        username: employee.code,
+        employeeId: employeeId,
+        password: generatePasswordAuto(employee.contactId.email),
       });
 
       //Save to DB
       const user = await newUser.save();
-      return res.status(200).json(user);
+      return res
+        .status(201)
+        .json({ success: true, message: "User created successfully!" });
     } catch (err) {
       return res.status(500).json(err);
     }

@@ -4,10 +4,13 @@ const mongoose = require("mongoose");
 const createTransactionDetail = require("../services/TransactionDetailService");
 const Warehouse = require("../models/warehouseModel");
 
-const generateTransactionCode = async (warehouseId, type) => {
-  const warehouse = await Warehouse.findById(warehouseId);
+const generateTransactionCode = async (warehouseId, type, session) => {
+  const warehouse = await Warehouse.findById(warehouseId).session(session);
   const warehouseCode = warehouse.code;
-  const transactionAmount = await Transaction.countDocuments({ type: type });
+  const transactionAmount = await Transaction.countDocuments(
+    { type: type },
+    { session }
+  );
   const transactionAmountStr = String(transactionAmount).padStart(4, "0");
   let transactionCode = "";
   if (type === "Inbound") {
@@ -25,17 +28,20 @@ const transactionController = {
     try {
       const { type, employeeId, partnerId, warehouseId, details } = req.body;
       let total = 0;
-      const newTransaction = new Transaction({
-        code: await generateTransactionCode(warehouseId, type),
-        type,
-        total,
-        warehouseId,
-        employeeId,
-        partnerId,
-      });
+      const newTransaction = new Transaction(
+        {
+          code: await generateTransactionCode(warehouseId, type, session),
+          type,
+          total,
+          warehouseId,
+          employeeId,
+          partnerId,
+        },
+        { session }
+      );
       const savedTransaction = await newTransaction.save({ session });
       for (i = 0; i < details.length; i++) {
-        transactionDetail = await createTransactionDetail(
+        let transactionDetail = await createTransactionDetail(
           req,
           res,
           details[i].productId,
@@ -43,15 +49,22 @@ const transactionController = {
           session,
           savedTransaction
         );
-        console.log(transactionDetail._id);
         if (transactionDetail) {
           total += transactionDetail.total;
-          await savedTransaction.updateOne({
-            $push: { transactionDetails: transactionDetail._id },
-          });
+          await savedTransaction.updateOne(
+            {
+              $push: { transactionDetails: transactionDetail._id },
+            },
+            { session }
+          );
         }
       }
-      res.status(200).json(savedTransaction);
+      res
+        .status(201)
+        .json({
+          success: true,
+          message: `New transaction ${savedTransaction.code} created successfully!`,
+        });
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database
@@ -70,7 +83,7 @@ const transactionController = {
         "transactionDetails"
       );
       if (!transactions) {
-        throw new NotFoundError("Not found any transactions");
+        return res.status(404).send("Not found any transactions");
       }
       res.status(200).json(transactions);
     } catch (error) {
@@ -84,7 +97,7 @@ const transactionController = {
         type: "Inbound",
       }).populate("transactionDetails");
       if (!inboundTransactions) {
-        throw new NotFoundError("Not found any inbound transactions");
+        return res.status(404).send("Not found any inbound transactions");
       }
 
       res.status(200).json(inboundTransactions);
@@ -98,7 +111,7 @@ const transactionController = {
         type: "Outbound",
       }).populate("transactionDetails");
       if (!outboundTransactions) {
-        throw new NotFoundError("Not found any outbound transactions");
+        return res.status(404).send("Not found any outbound transactions");
       }
       res.status(200).json(outboundTransactions);
     } catch (error) {

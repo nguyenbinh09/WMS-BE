@@ -3,10 +3,13 @@ const Warehouse = require("../models/warehouseModel");
 const ContactInfo = require("../models/contactInfoModel");
 const cloudinary = require("../utils/helper");
 const { format, parse } = require("date-fns");
+const mongoose = require("mongoose");
 
-const generateEmployeeCode = async (warehouseId, position) => {
+const generateEmployeeCode = async (warehouseId, position, session) => {
   {
-    const warehouse = await Warehouse.findOne({ _id: warehouseId });
+    const warehouse = await Warehouse.findOne({ _id: warehouseId }).session(
+      session
+    );
     let employeePosition = position;
     if (employeePosition)
       switch (employeePosition) {
@@ -19,9 +22,12 @@ const generateEmployeeCode = async (warehouseId, position) => {
         default:
           break;
       }
-    const employeeAmount = await Employee.countDocuments({
-      isDeleted: false,
-    });
+    const employeeAmount = await Employee.countDocuments(
+      {
+        isDeleted: false,
+      },
+      { session }
+    );
     const employeeAmountStr = String(employeeAmount).padStart(4, "0");
     const warehouseCode = warehouse.code.substring(0, 2);
     const employeeCode = warehouseCode + employeeAmountStr + employeePosition;
@@ -31,6 +37,8 @@ const generateEmployeeCode = async (warehouseId, position) => {
 
 const employeeController = {
   addEmployee: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const {
         name,
@@ -59,9 +67,9 @@ const employeeController = {
             crop: "fill",
           });
         } catch (err) {
-          throw new InternalServerError(
-            "Unable to upload image, please try again"
-          );
+          return res
+            .status(500)
+            .send("Unable to upload image, please try again");
         }
       }
       let imageUrl;
@@ -70,31 +78,50 @@ const employeeController = {
         imageUrl = result.url;
       }
 
-      const newContact = new ContactInfo({ address, phone_num, email });
-      const newEmployee = new Employee({
-        name,
-        code: await generateEmployeeCode(warehouseId, position),
-        position,
-        startDate: isoStartDateStr,
-        gender,
-        idCard,
-        contactId: newContact._id,
-        imageUrl,
-        birthday: isoBirthDayStr,
-        warehouseId,
+      const newContact = new ContactInfo(
+        { address, phone_num, email },
+        { session }
+      );
+      const newEmployee = new Employee(
+        {
+          name,
+          code: await generateEmployeeCode(warehouseId, position, session),
+          position,
+          startDate: isoStartDateStr,
+          gender,
+          idCard,
+          contactId: newContact._id,
+          imageUrl,
+          birthday: isoBirthDayStr,
+          warehouseId,
+        },
+        { session }
+      );
+      await newContact.save({ session });
+      const savedemployee = await newEmployee.save({ session });
+      res.status(201).json({
+        success: true,
+        message: `New product ${savedemployee.code} created successfully!`,
       });
-      await newContact.save();
-      const employee = await newEmployee.save();
-      res.status(200).json(req.file);
+      await session.commitTransaction();
     } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
       throw error;
+    } finally {
+      // Ending the session
+      await session.endSession();
     }
   },
   getAllEmployee: async (req, res) => {
     try {
-      const employees = await Employee.find();
+      const employees = await Employee.find().populate([
+        "contactId",
+        "warehouseId",
+      ]);
       if (!employees) {
-        return res.status(404).send("Unable to upload image, please try again");
+        return res.status(404).send("Not found any employees");
       }
       res.status(200).json(employees);
     } catch (error) {
@@ -103,13 +130,13 @@ const employeeController = {
   },
   getAnEmployee: async (req, res) => {
     try {
-      const employee = await Employee.findById(req.params.id).populate(
-        "contactId"
-      );
+      const employee = await Employee.findById(req.params.id).populate([
+        "contactId",
+        "warehouseId",
+      ]);
       if (!employee) {
         return res.status(404).send("The employee does not exist");
       }
-      console.log(employee.contactId.address);
       res.status(200).json(employee);
     } catch (error) {
       return res.status(500).json(error);
