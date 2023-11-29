@@ -60,7 +60,35 @@ const partnerController = {
     try {
       const partners = await Partner.find().populate(["contactId"]);
       if (!partners) {
-        return res.status(404).send("Not found any employees");
+        return res.status(404).send("Not found any partners");
+      }
+      res.status(200).json(partners);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getCustomer: async (req, res) => {
+    try {
+      const partners = await Partner.find({ type: "Customer" }).populate([
+        "contactId",
+      ]);
+      if (!partners) {
+        return res.status(404).send("Not found any customers");
+      }
+      res.status(200).json(partners);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getSupplier: async (req, res) => {
+    try {
+      const partners = await Partner.find({ type: "Supplier" }).populate([
+        "contactId",
+      ]);
+      if (!partners) {
+        return res.status(404).send("Not found any suppliers");
       }
       res.status(200).json(partners);
     } catch (error) {

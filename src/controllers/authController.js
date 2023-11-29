@@ -17,7 +17,7 @@ const generatePasswordAuto = (email) => {
   const salt = bcrypt.genSaltSync(saltRounds);
   const hashedPassword = bcrypt.hashSync(randomPassword, salt);
   mailTransport().sendMail({
-    from: "nguyenthaibinh810@gmail.com",
+    from: process.env.MAILTRAN_USERNAME,
     to: email,
     subject: "Your Password",
     html: UserPassword(randomPassword),
