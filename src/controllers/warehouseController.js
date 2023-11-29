@@ -77,11 +77,14 @@ const warehouseController = {
   },
   getWarehouse: async (req, res) => {
     try {
-      const warehouse = await Warehouse.findById(req.params.id);
+      const warehouse = await Warehouse.findById(req.params.id).populate([
+        "contactId",
+        "managerId",
+      ]);
       if (warehouse && warehouse.isDeleted === false) {
         res.status(200).json(warehouse);
       } else if (warehouse && warehouse.isDeleted === true) {
-        res.status(410).send("Warehouse is deleted");
+        return res.status(410).send("Warehouse is deleted");
       } else {
         return res.status(500).send("Not found any warehouses");
       }
@@ -92,7 +95,10 @@ const warehouseController = {
 
   getAllWarehouse: async (req, res) => {
     try {
-      const warehouses = await Warehouse.find({ isDeleted: false });
+      const warehouses = await Warehouse.find({ isDeleted: false }).populate([
+        "contactId",
+        "managerId",
+      ]);
       if (!warehouses) {
         return res.status(500).send("Not found any warehouses");
       }

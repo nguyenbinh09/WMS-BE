@@ -59,12 +59,10 @@ const transactionController = {
           );
         }
       }
-      res
-        .status(201)
-        .json({
-          success: true,
-          message: `New transaction ${savedTransaction.code} created successfully!`,
-        });
+      res.status(201).json({
+        success: true,
+        message: `New transaction ${savedTransaction.code} created successfully!`,
+      });
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database
@@ -79,9 +77,11 @@ const transactionController = {
 
   getAllTransactions: async (req, res) => {
     try {
-      const transactions = await Transaction.find().populate(
-        "transactionDetails"
-      );
+      const transactions = await Transaction.find().populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+      ]);
       if (!transactions) {
         return res.status(404).send("Not found any transactions");
       }
@@ -95,7 +95,7 @@ const transactionController = {
     try {
       const inboundTransactions = await Transaction.find({
         type: "Inbound",
-      }).populate("transactionDetails");
+      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
       if (!inboundTransactions) {
         return res.status(404).send("Not found any inbound transactions");
       }
@@ -109,7 +109,7 @@ const transactionController = {
     try {
       const outboundTransactions = await Transaction.find({
         type: "Outbound",
-      }).populate("transactionDetails");
+      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
       if (!outboundTransactions) {
         return res.status(404).send("Not found any outbound transactions");
       }

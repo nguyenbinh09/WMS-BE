@@ -11,7 +11,7 @@ const contactInfoSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, "Phone number is missing"],
+    default: "",
   },
 });
 
