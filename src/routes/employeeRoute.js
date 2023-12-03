@@ -5,7 +5,8 @@ const upload = multer({ dest: "uploads/" });
 const router = require("express").Router();
 
 router.post("/", upload.single("image"), employeeController.addEmployee);
-router.get("/", employeeController.getAllEmployee);
+router.get("/", employeeController.getEmployee);
+router.get("/manager", employeeController.getManager);
 router.get("/:id", employeeController.getAnEmployee);
 router.put("/:id", upload.single("image"), employeeController.updateEmployee);
 router.delete("/:id", employeeController.deleteEmployee);
