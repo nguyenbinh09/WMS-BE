@@ -114,16 +114,31 @@ const employeeController = {
     }
   },
 
-  getAllEmployee: async (req, res) => {
+  getEmployee: async (req, res) => {
     try {
-      const employees = await Employee.find().populate([
-        "contactId",
-        "warehouseId",
-      ]);
+      const employees = await Employee.find({
+        position: { $nin: "Manager" },
+        isDeleted: false,
+      }).populate(["contactId", "warehouseId"]);
       if (!employees) {
         return res.status(404).send("Not found any employees");
       }
       res.status(200).json(employees);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getManager: async (req, res) => {
+    try {
+      const managers = await Employee.find({
+        position: "Manager",
+        isDeleted: false,
+      }).populate(["contactId", "warehouseId"]);
+      if (!managers) {
+        return res.status(404).send("Not found any managers");
+      }
+      res.status(200).json(managers);
     } catch (error) {
       return res.status(500).json(error);
     }
@@ -218,8 +233,6 @@ const employeeController = {
             .status(500)
             .send("Unable to upload image, please try again");
         }
-      } else {
-        return res.status(401).send("File upload failed. Please try again");
       }
       let imageUrl;
       if (result) {

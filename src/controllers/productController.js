@@ -80,8 +80,6 @@ const productController = {
             .status(500)
             .send("Unable to upload image, please try again");
         }
-      } else {
-        return res.status(401).send("File upload failed. Please try again");
       }
       let imageUrl;
       // check if image upload or not
@@ -122,7 +120,9 @@ const productController = {
 
   getAProduct: async (req, res) => {
     try {
-      const product = await Product.findById(req.params.id);
+      const product = await Product.findById(req.params.id).populate(
+        "supplierId"
+      );
       res.status(200).json(product);
     } catch (error) {
       return res.status(500).json(error);
@@ -137,29 +137,13 @@ const productController = {
         req.body;
       const { id } = req.params;
       const product = await Product.findById(id).session(session);
-
-      if (supplierId) {
-        const supplier = await Partner.findOne({
-          _id: supplierId,
-          isDeleted: false,
-        }).session(session);
-        if (!supplier) {
-          return res
-            .status(404)
-            .send(`The supplier with _id ${supplierId} does not exists`);
-        } else if (supplier.isDeleted === true) {
-          return res
-            .status(410)
-            .send(`The supplier with _id ${supplierId} is deleted`);
-        }
-      }
       //edit name
       let newCode;
       if (name) {
         newCode = await handleSkuCode(name, id, session);
       }
       //edit supplier
-      if (supplierId) {
+      if (supplierId || supplierId === "") {
         if (supplierId !== "") {
           const supplier = await Partner.findOne({
             _id: supplierId,
@@ -168,11 +152,11 @@ const productController = {
           if (!supplier) {
             return res
               .status(404)
-              .send(`Partner with code ${supplier.code} is not found!`);
+              .send(`Supplier with code ${supplier.code} is not found!`);
           } else if (supplier.isDeleted === true) {
             return res
               .status(404)
-              .send(`Partner with code ${supplier.code} is deleted!`);
+              .send(`Supplier with code ${supplier.code} is deleted!`);
           }
           await Partner.findOneAndUpdate(
             { _id: supplier._id, type: "Supplier" },
@@ -181,16 +165,19 @@ const productController = {
           )
             .populate("products")
             .session(session);
-          console.log(supplier);
         }
-        await Partner.findOneAndUpdate(
-          { _id: product.supplierId, type: "Supplier" },
-          { $pull: { products: product._id } },
-          { new: true }
-        )
-          .session(session)
-          .populate("products");
+
+        if (product.supplierId) {
+          await Partner.findOneAndUpdate(
+            { _id: product.supplierId, type: "Supplier" },
+            { $pull: { products: product._id } },
+            { new: true }
+          )
+            .session(session)
+            .populate("products");
+        }
       }
+
       //edit image
       let result;
       if (req.file) {
@@ -207,8 +194,6 @@ const productController = {
             .status(500)
             .send("Unable to upload image, please try again");
         }
-      } else {
-        return res.status(401).send("File upload failed. Please try again");
       }
       let imageUrl;
       // check if image upload or not
@@ -229,7 +214,39 @@ const productController = {
         },
         { new: true }
       ).session(session);
-      res.status(200).json(`Product with ${product.code} updated Successfully`);
+      res
+        .status(200)
+        .json(`Product with ${product.skuCode} updated Successfully`);
+      await session.commitTransaction();
+    } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
+      throw error;
+    } finally {
+      // Ending the session
+      await session.endSession();
+    }
+  },
+
+  deleteProduct: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { id } = req.params;
+      const product = await Product.findByIdAndUpdate(id, {
+        $set: { isDeleted: true },
+      }).session(session);
+      if (product.supplierId) {
+        await Partner.findOneAndUpdate(
+          { _id: product.supplierId, type: "Supplier", isDeleted: false },
+          { $pull: { products: product._id } },
+          { new: true }
+        )
+          .session(session)
+          .populate("products");
+      }
+      res.status(201).send("Deleted product successfully!");
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database
