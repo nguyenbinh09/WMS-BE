@@ -44,7 +44,11 @@ const productController = {
         warehouseId,
         supplierId,
       } = req.body;
-      const supplier = await Partner.findById(supplierId).session(session);
+      const supplier = await Partner.findOne({
+        _id: supplierId,
+        type: "Supplier",
+        isDeleted: false,
+      }).session(session);
       if (!supplier)
         return res
           .status(404)
@@ -102,7 +106,7 @@ const productController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();
@@ -147,6 +151,7 @@ const productController = {
         if (supplierId !== "") {
           const supplier = await Partner.findOne({
             _id: supplierId,
+            type: "Supplier",
             isDeleted: false,
           }).session(session);
           if (!supplier) {
@@ -222,7 +227,7 @@ const productController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();
@@ -252,7 +257,7 @@ const productController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();

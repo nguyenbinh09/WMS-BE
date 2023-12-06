@@ -3,6 +3,7 @@ const Employee = require("../models/employeeModel");
 const ContactInfo = require("../models/contactInfoModel");
 const mongoose = require("mongoose");
 const validator = require("validator");
+const Product = require("../models/productModel");
 
 const generateWarehouseCode = async (session) => {
   const warehouseAmount = await Warehouse.countDocuments(
@@ -68,7 +69,7 @@ const warehouseController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();
@@ -140,9 +141,13 @@ const warehouseController = {
           .status(404)
           .send(`The manager with id ${managerId} does not exists`);
       else if (manager.isDeleted === true) {
-        return res.status(410).json({
-          message: `Manager with id ${managerId} is deleted`,
-        });
+        return res.status(410).send(`Manager with id ${managerId} is deleted`);
+      } else if (manager.warehouseId !== "") {
+        return res
+          .status(400)
+          .send(
+            `Manager with code ${manager.code} is managing another warehouse!`
+          );
       }
       const isEmail = validator.isEmail(email);
       if (!isEmail && email !== "") {
@@ -174,7 +179,46 @@ const warehouseController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
+    } finally {
+      // Ending the session
+      await session.endSession();
+    }
+  },
+  deleteWarehouse: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { id } = req.params;
+      const employees = await Employee.find({ warehouseId: id }).session(
+        session
+      );
+      const products = await Product.find({ warehouseId: id }).session(session);
+      if (employees) {
+        return req
+          .status(400)
+          .send(
+            `There are still employees in the warehouse. Please check again!`
+          );
+      }
+      if (products) {
+        return req
+          .status(400)
+          .send(
+            `There are still products in the warehouse. Please check again!`
+          );
+      }
+      await Warehouse.findByIdAndUpdate(
+        id,
+        { $set: { isDeleted: true } },
+        { new: true }
+      ).session(session);
+      await session.commitTransaction();
+    } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();

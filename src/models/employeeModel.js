@@ -41,7 +41,6 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       default:
         "https://res.cloudinary.com/dux8aqzzz/image/upload/v1685547037/xd0gen7b4z5wgwuqfvpz.png",
-      required: true,
     },
     isDeleted: {
       type: Boolean,
@@ -57,6 +56,7 @@ const employeeSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
       ref: "Warehouse",
+      default: "",
     },
     isDeleted: {
       type: Boolean,

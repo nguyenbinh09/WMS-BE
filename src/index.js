@@ -20,7 +20,7 @@ mongoose
     console.log("Kết nối thành công!");
   })
   .catch((err) => {
-    throw err;
+    return res.status(500).json(err);
   });
 
 const app = express();
