@@ -107,7 +107,7 @@ const employeeController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();
@@ -270,7 +270,7 @@ const employeeController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();
@@ -298,7 +298,7 @@ const employeeController = {
       // Rollback any changes made in the database
       await session.abortTransaction();
       // Rethrow the error
-      throw error;
+      return res.status(500).json(error);
     } finally {
       // Ending the session
       await session.endSession();

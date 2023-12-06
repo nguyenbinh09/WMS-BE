@@ -32,7 +32,9 @@ const createTransactionDetail = async (
       }
     } else {
       if (quantity > product.quantity) {
-        return res.status(409).send("Product quantity is not enough!");
+        return res
+          .status(409)
+          .send(`Product ${product.skuCode} quantity is not enough!`);
       }
       quantityTemp = product.quantity - quantity;
     }
@@ -42,7 +44,6 @@ const createTransactionDetail = async (
       total,
       transactionId: transaction._id,
     });
-    await product.updateOne({ quantity: quantityTemp }, { session });
     const savedTransaction = await newTransactionDetail.save({ session });
     return savedTransaction;
   } catch (error) {
