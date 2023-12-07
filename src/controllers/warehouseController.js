@@ -29,19 +29,28 @@ const warehouseController = {
         phone_num,
         address,
       } = req.body;
-      const manager = await Employee.findOne({
-        _id: managerId,
-        isDeleted: false,
-      }).session(session);
-      if (!manager)
-        return res
-          .status(404)
-          .send(`The manager with id ${managerId} does not exists`);
-      else if (manager.isDeleted === true) {
-        return res.status(410).json({
-          success: true,
-          message: `Manager with id ${managerId} is deleted`,
-        });
+      if (managerId) {
+        const manager = await Employee.findOne({
+          _id: managerId,
+          isDeleted: false,
+        }).session(session);
+        console.log(manager);
+        if (!manager)
+          return res
+            .status(404)
+            .send(`The manager with id ${managerId} does not exists`);
+        else if (manager.isDeleted === true) {
+          return res.status(410).json({
+            success: true,
+            message: `Manager with id ${managerId} is deleted`,
+          });
+        } else if (manager.warehouseId !== "") {
+          return res
+            .status(400)
+            .send(
+              `Manager with code ${manager.code} is managing another warehouse!`
+            );
+        }
       }
       const newContact = new ContactInfo(
         { address, phone_num, email },
@@ -185,24 +194,31 @@ const warehouseController = {
       await session.endSession();
     }
   },
+
   deleteWarehouse: async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
       const { id } = req.params;
-      const employees = await Employee.find({ warehouseId: id }).session(
-        session
-      );
-      const products = await Product.find({ warehouseId: id }).session(session);
-      if (employees) {
-        return req
+      const employees = await Employee.find({
+        warehouseId: id,
+        isDeleted: false,
+      }).session(session);
+      const products = await Product.find({
+        warehouseId: id,
+        isDeleted: false,
+      }).session(session);
+      if (employees.length !== 0) {
+        console.log("ok");
+        return res
           .status(400)
           .send(
             `There are still employees in the warehouse. Please check again!`
           );
       }
-      if (products) {
-        return req
+      if (products.length !== 0) {
+        console.log(products);
+        return res
           .status(400)
           .send(
             `There are still products in the warehouse. Please check again!`
@@ -213,6 +229,7 @@ const warehouseController = {
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);
+      res.status(200).send("Deleted warehouse successfully!");
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database

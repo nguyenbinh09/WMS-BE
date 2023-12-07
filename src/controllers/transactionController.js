@@ -77,11 +77,9 @@ const transactionController = {
 
   getAllTransactions: async (req, res) => {
     try {
-      const transactions = await Transaction.find().populate([
-        "transactionDetails",
-        "employeeId",
-        "warehouseId",
-      ]);
+      const transactions = await Transaction.find({
+        isDeleted: false,
+      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
       if (!transactions) {
         return res.status(404).send("Not found any transactions");
       }

@@ -34,8 +34,8 @@ const employeeSchema = new mongoose.Schema(
     },
     idCard: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true, "Id card is missing"],
+      unique: [true, "A employee with the same id card has already exists"],
     },
     imageUrl: {
       type: String,
