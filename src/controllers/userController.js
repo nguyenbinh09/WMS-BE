@@ -4,7 +4,9 @@ const userController = {
   //GET ALL USERS
   getAllUsers: async (req, res) => {
     try {
-      const users = await User.find().populate("employeeId");
+      const users = await User.find({ isDeleted: false }).populate(
+        "employeeId"
+      );
       res.status(200).json(users);
     } catch (error) {
       return res.status(500).json(error);

@@ -35,7 +35,6 @@ const productSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required: true,
     default:
       "https://apandharampur.websites.co.in/dummytemplate/img/product-placeholder.png",
   },

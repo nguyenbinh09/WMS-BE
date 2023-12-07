@@ -115,7 +115,9 @@ const productController = {
 
   getAllProducts: async (req, res) => {
     try {
-      const products = await Product.find().populate("supplierId");
+      const products = await Product.find({ isDeleted: false }).populate(
+        "supplierId"
+      );
       res.status(200).json(products);
     } catch (error) {
       return res.status(500).json(error);
@@ -239,9 +241,13 @@ const productController = {
     session.startTransaction();
     try {
       const { id } = req.params;
-      const product = await Product.findByIdAndUpdate(id, {
-        $set: { isDeleted: true },
-      }).session(session);
+      const product = await Product.findByIdAndUpdate(
+        id,
+        {
+          $set: { isDeleted: true },
+        },
+        { new: true }
+      ).session(session);
       if (product.supplierId) {
         await Partner.findOneAndUpdate(
           { _id: product.supplierId, type: "Supplier", isDeleted: false },
