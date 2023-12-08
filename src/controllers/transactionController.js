@@ -3,6 +3,7 @@ const Transaction = require("../models/transactionModel");
 const mongoose = require("mongoose");
 const createTransactionDetail = require("../services/TransactionDetailService");
 const Warehouse = require("../models/warehouseModel");
+const Partner = require("../models/partnerModel");
 
 const generateTransactionCode = async (warehouseId, type, session) => {
   const warehouse = await Warehouse.findById(warehouseId).session(session);
@@ -51,12 +52,11 @@ const transactionController = {
         );
         if (transactionDetail) {
           total += transactionDetail.total;
-          await savedTransaction.updateOne(
-            {
+          await savedTransaction
+            .updateOne({
               $push: { transactionDetails: transactionDetail._id },
-            },
-            { session }
-          );
+            })
+            .session(session);
         }
       }
       res.status(201).json({
@@ -103,6 +103,7 @@ const transactionController = {
       return res.status(500).json(error);
     }
   },
+
   getAllOutbound: async (req, res) => {
     try {
       const outboundTransactions = await Transaction.find({
@@ -121,6 +122,21 @@ const transactionController = {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
+      const { id } = req.params;
+      const { partnerId, details } = req.body;
+      if (partnerId) {
+        const partner = await Partner.findById(partnerId).session(session);
+        if (!partner) {
+          return res
+            .status(404)
+            .send(`Supplier with code ${partner.code} is not found!`);
+        } else if (partner.isDeleted === true) {
+          return res
+            .status(404)
+            .send(`Supplier with code ${partner.code} is deleted!`);
+        }
+      }
+
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database

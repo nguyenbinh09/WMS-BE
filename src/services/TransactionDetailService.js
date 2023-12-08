@@ -38,6 +38,11 @@ const createTransactionDetail = async (
       }
       quantityTemp = product.quantity - quantity;
     }
+    await Product.findByIdAndUpdate(
+      product._id,
+      { $set: { quantity: quantityTemp } },
+      { new: true }
+    ).session(session);
     const newTransactionDetail = new TransactionDetail({
       productId,
       quantity,
@@ -51,4 +56,12 @@ const createTransactionDetail = async (
   }
 };
 
+const updateTransactionDetail = async (
+  req,
+  res,
+  id,
+  productId,
+  quantity,
+  session
+) => {};
 module.exports = createTransactionDetail;

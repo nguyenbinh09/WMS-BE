@@ -50,6 +50,11 @@ const transactionSchema = new mongoose.Schema(
         ref: "TransactionDetail",
       },
     ],
+    isDeleted: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   { timestamps: true }
 );
