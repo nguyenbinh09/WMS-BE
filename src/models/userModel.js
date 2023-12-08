@@ -22,10 +22,10 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
     employeeId: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       ref: "Employee",
       required: true,
-      unique: true,
+      unique: [true, "User of the employee existed!"],
     },
     isDeleted: {
       type: Boolean,

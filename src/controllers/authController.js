@@ -34,6 +34,7 @@ const authController = {
       const employee = await Employee.findById(employeeId).populate(
         "contactId"
       );
+
       if (!employee)
         return res
           .status(404)
@@ -43,14 +44,13 @@ const authController = {
           .status(410)
           .send(`Employee with id ${employeeId} is deleted`);
       }
-      console.log(employee.contactId.email);
       //Create new user
       const newUser = new User({
         username: employee.code,
         employeeId: employeeId,
         password: generatePasswordAuto(employee.contactId.email),
       });
-
+      console.log(employee);
       //Save to DB
       const user = await newUser.save();
       return res
