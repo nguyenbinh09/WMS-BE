@@ -157,6 +157,23 @@ const employeeController = {
     }
   },
 
+  getStaffByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const employees = await Employee.find({
+        position: { $nin: "Manager" },
+        isDeleted: false,
+        warehouseId: warehouseId,
+      }).populate(["contactId", "warehouseId"]);
+      if (!employees) {
+        return res.status(404).send("Not found any employees");
+      }
+      res.status(200).json(employees);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
   getManager: async (req, res) => {
     try {
       const managers = await Employee.find({
@@ -226,6 +243,7 @@ const employeeController = {
       else if (employee.isDeleted === true) {
         return res.status(410).send(`Employee with id ${id} is deleted`);
       }
+      //check whether warehouse has had the manager or not
       if (warehouseId && position === "Manager") {
         const warehouse = await Warehouse.findById(warehouseId).session(
           session

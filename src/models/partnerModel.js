@@ -31,6 +31,11 @@ const partnerSchema = new mongoose.Schema({
     required: true,
     default: false,
   },
+  warehouseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Warehouse",
+  },
 });
 
 let Partner = mongoose.model("Partner", partnerSchema);
