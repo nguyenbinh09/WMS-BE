@@ -8,6 +8,7 @@ const {
 } = require("../services/TransactionDetailService");
 const Warehouse = require("../models/warehouseModel");
 const Partner = require("../models/partnerModel");
+const Product = require("../models/productModel");
 
 const generateTransactionCode = async (warehouseId, type, session) => {
   const warehouse = await Warehouse.findById(warehouseId).session(session);
@@ -216,7 +217,71 @@ const transactionController = {
       await session.endSession();
     }
   },
-  updateStatus: async (req, res) => {},
+  updateStatus: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const transaction = await Transaction.findById(id)
+        .session(session)
+        .populate("transactionDetails");
+      if (status === "Done") {
+        if (transaction.type === "Inbound") {
+          const details = transaction.transactionDetails;
+          for (i = 0; i < details.length; i++) {
+            await Product.findByIdAndUpdate(
+              details[i].productId,
+              { $set: { quantity: details[i].quantity } },
+              { new: true }
+            ).session(session);
+          }
+        }
+      }
+      if (status === "Returned") {
+        const details = transaction.transactionDetails;
+        if (transaction.type === "Inbound") {
+          for (i = 0; i < details.length; i++) {
+            const product = await Product.findById(
+              details[i].productId
+            ).session(session);
+            let tempQuantity = product.quantity - details[i].quantity;
+            if (tempQuantity < 0) tempQuantity = 0;
+            await Product.findByIdAndUpdate(
+              details[i].productId,
+              { $set: { quantity: tempQuantity } },
+              { new: true }
+            ).session(session);
+          }
+        } else {
+          for (i = 0; i < details.length; i++) {
+            const product = await Product.findById(
+              details[i].productId
+            ).session(session);
+            const tempQuantity = product.quantity + details[i].quantity;
+            await Product.findByIdAndUpdate(
+              details[i].productId,
+              { $set: { quantity: tempQuantity } },
+              { new: true }
+            ).session(session);
+          }
+        }
+      }
+      res.status(201).json({
+        success: true,
+        message: `New transaction  created successfully!`,
+      });
+      await session.commitTransaction();
+    } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
+      return res.status(500).json(error);
+    } finally {
+      // Ending the session
+      await session.endSession();
+    }
+  },
 };
 
 module.exports = transactionController;
