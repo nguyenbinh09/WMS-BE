@@ -56,7 +56,15 @@ const employeeController = {
         { address, phone_num, email },
         { session }
       );
-
+      let warehouse;
+      if (warehouseId && position === "Manager") {
+        warehouse = await Warehouse.findById(warehouseId).session(session);
+        if (warehouse.managerId && warehouse.managerId !== null) {
+          return res
+            .status(404)
+            .send("The manager of the warehouse already exists");
+        }
+      }
       const newEmployee = new Employee(
         {
           name,
@@ -97,7 +105,13 @@ const employeeController = {
       await newContact.save({ session });
       //save employee
       const savedemployee = await newEmployee.save({ session });
-
+      if (warehouse) {
+        await Warehouse.findByIdAndUpdate(
+          warehouse._id,
+          { $set: { managerId: savedemployee._id } },
+          { new: true }
+        ).session(session);
+      }
       res.status(201).json({
         success: true,
         message: `New product ${savedemployee.code} created successfully!`,
