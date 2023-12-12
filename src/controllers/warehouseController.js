@@ -44,7 +44,7 @@ const warehouseController = {
             success: true,
             message: `Manager with id ${managerId} is deleted`,
           });
-        } else if (manager.warehouseId !== "") {
+        } else if (manager.warehouseId && manager.warehouseId !== null) {
           return res
             .status(400)
             .send(
@@ -141,26 +141,57 @@ const warehouseController = {
           message: `Manager warehouse id ${warehouse.code} is deleted`,
         });
       }
-      const manager = await Employee.findOne({
-        _id: managerId,
-        isDeleted: false,
-      }).session(session);
-      if (!manager)
-        return res
-          .status(404)
-          .send(`The manager with id ${managerId} does not exists`);
-      else if (manager.isDeleted === true) {
-        return res.status(410).send(`Manager with id ${managerId} is deleted`);
-      } else if (manager.warehouseId !== "") {
-        return res
-          .status(400)
-          .send(
-            `Manager with code ${manager.code} is managing another warehouse!`
-          );
+      if (managerId && managerId !== null) {
+        const manager = await Employee.findOne({
+          _id: managerId,
+          isDeleted: false,
+        }).session(session);
+        if (!manager)
+          return res
+            .status(404)
+            .send(`The manager with id ${managerId} does not exists`);
+        else if (manager.isDeleted === true) {
+          return res
+            .status(410)
+            .send(`Manager with id ${managerId} is deleted`);
+        } else if (manager.warehouseId !== null) {
+          return res
+            .status(400)
+            .send(
+              `Manager with code ${manager.code} is managing another warehouse!`
+            );
+        }
+        await Employee.findByIdAndUpdate(
+          manager._id,
+          { $set: { warehouseId: warehouse._id } },
+          { new: true }
+        ).session(session);
+        await Warehouse.findByIdAndUpdate(
+          id,
+          {
+            $set: { managerId },
+          },
+          { new: true }
+        ).session(session);
+      } else {
+        await Warehouse.findByIdAndUpdate(
+          id,
+          {
+            $unset: { managerId: "" },
+          },
+          { new: true }
+        ).session(session);
+        await Employee.findByIdAndUpdate(
+          warehouse.managerId,
+          { $set: { warehouseId: null } },
+          { new: true }
+        ).session(session);
       }
-      const isEmail = validator.isEmail(email);
-      if (!isEmail && email !== "") {
-        return res.status(400).send("Email is not invalid!");
+      if (email) {
+        const isEmail = validator.isEmail(email);
+        if (!isEmail && email !== null) {
+          return res.status(400).send("Email is not invalid!");
+        }
       }
       await ContactInfo.findByIdAndUpdate(
         warehouse.contactId,
@@ -176,7 +207,7 @@ const warehouseController = {
       await Warehouse.findByIdAndUpdate(
         id,
         {
-          $set: { managerId, name, capacity, description },
+          $set: { name, capacity, description },
         },
         { new: true }
       ).session(session);

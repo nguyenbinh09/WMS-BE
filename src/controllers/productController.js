@@ -149,8 +149,8 @@ const productController = {
         newCode = await handleSkuCode(name, id, session);
       }
       //edit supplier
-      if (supplierId || supplierId === "") {
-        if (supplierId !== "") {
+      if (supplierId || supplierId === null) {
+        if (supplierId !== null) {
           const supplier = await Partner.findOne({
             _id: supplierId,
             type: "Supplier",

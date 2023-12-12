@@ -1,7 +1,11 @@
 const TransactionDetail = require("../models/transactionDetailModel");
 const Transaction = require("../models/transactionModel");
 const mongoose = require("mongoose");
-const createTransactionDetail = require("../services/TransactionDetailService");
+const {
+  createTransactionDetail,
+  updateTransactionDetail,
+  deleteTransactionDetail,
+} = require("../services/TransactionDetailService");
 const Warehouse = require("../models/warehouseModel");
 const Partner = require("../models/partnerModel");
 
@@ -136,7 +140,71 @@ const transactionController = {
             .send(`Supplier with code ${partner.code} is deleted!`);
         }
       }
-
+      const transaction = await Transaction.findById(id);
+      let total = 0;
+      for (i = 0; i < details.length; i++) {
+        let transactionDetail;
+        //If update transaction detail existing
+        if (details[i].action === "update") {
+          transactionDetail = await updateTransactionDetail(
+            req,
+            res,
+            details[i].id,
+            details[i].productId,
+            details[i].quantity,
+            session,
+            transaction
+          );
+          if (transactionDetail) {
+            total += transactionDetail.total;
+          }
+        }
+        //If add new transaction detail
+        else if (details[i].action === "new") {
+          transactionDetail = await createTransactionDetail(
+            req,
+            res,
+            details[i].productId,
+            details[i].quantity,
+            session,
+            transaction
+          );
+          if (transactionDetail) {
+            total += transactionDetail.total;
+            await Transaction.findByIdAndUpdate(
+              id,
+              {
+                $push: { transactionDetails: transactionDetail._id },
+              },
+              { new: true }
+            ).session(session);
+          }
+        }
+        //If delete transaction detail existing
+        else if (details[i].action === "delete") {
+          transactionDetail = await deleteTransactionDetail(
+            req,
+            res,
+            details[i].id,
+            session,
+            transaction
+          );
+          if (transactionDetail) {
+            await Transaction.findByIdAndUpdate(
+              id,
+              {
+                $pull: { transactionDetails: transactionDetail._id },
+              },
+              { new: true }
+            ).session(session);
+          }
+        }
+      }
+      await Transaction.findByIdAndUpdate(
+        id,
+        { $set: { partnerId } },
+        { new: true }
+      ).session(session);
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database

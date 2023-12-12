@@ -25,7 +25,7 @@ const partnerController = {
     try {
       const { name, type, email, phone_num, address } = req.body;
       const isEmail = validator.isEmail(email);
-      if (!isEmail && email !== "") {
+      if (!isEmail && email !== null) {
         return res.status(400).send("Email is not invalid!");
       }
       const newContact = new ContactInfo(
@@ -115,7 +115,7 @@ const partnerController = {
       const partner = await Partner.findById(id);
       if (email) {
         const isEmail = validator.isEmail(email);
-        if (!isEmail && email !== "") {
+        if (!isEmail && email !== null) {
           return res.status(400).send("Email is not invalid!");
         }
       }
@@ -162,7 +162,7 @@ const partnerController = {
         for (i = 0; i < partner.products.length; i++) {
           await Product.findOneAndUpdate(
             { _id: partner.products[i], isDeleted: false },
-            { $set: { supplierId: "" } },
+            { $set: { supplierId: null } },
             { new: true }
           ).session(session);
         }

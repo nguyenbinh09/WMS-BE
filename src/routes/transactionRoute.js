@@ -5,4 +5,6 @@ router.post("/", transactionController.addTransaction);
 router.get("/", transactionController.getAllTransactions);
 router.get("/inbound", transactionController.getAllInbound);
 router.get("/outbound", transactionController.getAllOutbound);
+router.put("/:id");
+
 module.exports = router;

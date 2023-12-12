@@ -54,9 +54,8 @@ const employeeSchema = new mongoose.Schema(
     },
     warehouseId: {
       type: mongoose.Types.ObjectId,
-      required: true,
       ref: "Warehouse",
-      default: "",
+      default: null,
     },
     isDeleted: {
       type: Boolean,

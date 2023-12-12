@@ -49,7 +49,7 @@ const employeeController = {
       const isoStartDateStr = format(startdate, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
       const isEmail = validator.isEmail(email);
-      if (!isEmail && email !== "") {
+      if (!isEmail && email !== null) {
         return res.status(400).send("Email is not invalid!");
       }
       const newContact = new ContactInfo(
@@ -215,7 +215,7 @@ const employeeController = {
       //edit email
       if (email) {
         const isEmail = validator.isEmail(email);
-        if (!isEmail && email !== "") {
+        if (!isEmail && email !== null) {
           return res.status(400).send("Email is not invalid!");
         }
       }
@@ -301,8 +301,8 @@ const employeeController = {
         { $set: { isDeleted: true, finishDate: new Date() } },
         { new: true }
       ).session(session);
-      const user = await User.findOneAndUpdate(
-        { employeeId: employee._id },
+      await User.findOneAndUpdate(
+        { employeeId: employee._id, isDeleted: false },
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);
