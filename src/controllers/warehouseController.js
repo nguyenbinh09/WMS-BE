@@ -163,6 +163,13 @@ const warehouseController = {
           { $set: { warehouseId: warehouse._id } },
           { new: true }
         ).session(session);
+        if (manager._id !== warehouse.managerId) {
+          await Employee.findByIdAndUpdate(
+            warehouse.managerId,
+            { $set: { warehouseId: null } },
+            { new: true }
+          ).session(session);
+        }
         await Warehouse.findByIdAndUpdate(
           id,
           {
