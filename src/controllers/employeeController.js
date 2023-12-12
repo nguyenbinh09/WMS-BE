@@ -301,8 +301,8 @@ const employeeController = {
         { $set: { isDeleted: true, finishDate: new Date() } },
         { new: true }
       ).session(session);
-      const user = await User.findOneAndUpdate(
-        { employeeId: employee._id },
+      await User.findOneAndUpdate(
+        { employeeId: employee._id, isDeleted: false },
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);
