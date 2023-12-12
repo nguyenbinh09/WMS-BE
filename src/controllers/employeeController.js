@@ -226,6 +226,21 @@ const employeeController = {
       else if (employee.isDeleted === true) {
         return res.status(410).send(`Employee with id ${id} is deleted`);
       }
+      if (warehouseId && position === "Manager") {
+        const warehouse = await Warehouse.findById(warehouseId).session(
+          session
+        );
+        if (warehouse.managerId && warehouse.managerId !== null) {
+          return res
+            .status(404)
+            .send("The manager of the warehouse already exists");
+        }
+        await Warehouse.findByIdAndUpdate(
+          warehouse._id,
+          { $set: { managerId: employee._id } },
+          { new: true }
+        );
+      }
       //edit email
       if (email) {
         const isEmail = validator.isEmail(email);

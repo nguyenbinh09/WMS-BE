@@ -26,12 +26,12 @@ const warehouseController = {
         phone_num,
         address,
       } = req.body;
+      let manager;
       if (managerId) {
-        const manager = await Employee.findOne({
+        manager = await Employee.findOne({
           _id: managerId,
           isDeleted: false,
         }).session(session);
-        console.log(manager);
         if (!manager)
           return res
             .status(404)
@@ -67,6 +67,12 @@ const warehouseController = {
       await newContact.save({ session });
       // await manager.save();
       const savedWarehouse = await newWarehouse.save({ session });
+      if (manager)
+        await Employee.findByIdAndUpdate(
+          manager._id,
+          { $set: { warehouseId: savedWarehouse._id } },
+          { new: true }
+        ).session(session);
       res
         .status(200)
         .send(`New warehouse ${savedWarehouse.code} created successfully!`);
@@ -138,7 +144,7 @@ const warehouseController = {
           message: `Manager warehouse id ${warehouse.code} is deleted`,
         });
       }
-      if (managerId && managerId !== null) {
+      if (managerId) {
         const manager = await Employee.findOne({
           _id: managerId,
           isDeleted: false,
@@ -151,18 +157,20 @@ const warehouseController = {
           return res
             .status(410)
             .send(`Manager with id ${managerId} is deleted`);
-        } else if (manager.warehouseId !== null) {
+        } else if (manager.warehouseId) {
           return res
             .status(400)
             .send(
               `Manager with code ${manager.code} is managing another warehouse!`
             );
+        } else {
+          await Employee.findByIdAndUpdate(
+            manager._id,
+            { $set: { warehouseId: warehouse._id } },
+            { new: true }
+          ).session(session);
         }
-        await Employee.findByIdAndUpdate(
-          manager._id,
-          { $set: { warehouseId: warehouse._id } },
-          { new: true }
-        ).session(session);
+
         if (manager._id !== warehouse.managerId) {
           await Employee.findByIdAndUpdate(
             warehouse.managerId,
