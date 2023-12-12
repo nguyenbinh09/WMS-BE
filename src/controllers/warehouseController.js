@@ -6,10 +6,7 @@ const validator = require("validator");
 const Product = require("../models/productModel");
 
 const generateWarehouseCode = async (session) => {
-  const warehouseAmount = await Warehouse.countDocuments(
-    { isDeleted: false },
-    { session }
-  );
+  const warehouseAmount = await Warehouse.countDocuments().session(session);
   const warehouseAmountStr = String(warehouseAmount).padStart(2, "0");
   const warehouseCode = "WH" + warehouseAmountStr;
   return warehouseCode;

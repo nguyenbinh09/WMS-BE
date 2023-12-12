@@ -216,6 +216,7 @@ const transactionController = {
       await session.endSession();
     }
   },
+  updateStatus: async (req, res) => {},
 };
 
 module.exports = transactionController;
