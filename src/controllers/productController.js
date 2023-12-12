@@ -124,6 +124,19 @@ const productController = {
     }
   },
 
+  getProductByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const products = await Product.find({
+        isDeleted: false,
+        warehouseId: warehouseId,
+      }).populate("supplierId");
+      res.status(200).json(products);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
   getAProduct: async (req, res) => {
     try {
       const product = await Product.findById(req.params.id).populate(

@@ -26,7 +26,6 @@ const createTransactionDetail = async (
     const total = product.price * quantity;
     let quantityTemp = 0;
     if (transaction.type === "Inbound") {
-      //If transaction is inbound, quantity of the product will increase
       quantityTemp = product.quantity + quantity;
       if (quantityTemp > product.maximumQuantity) {
         return res
@@ -43,12 +42,12 @@ const createTransactionDetail = async (
           .send(`Product ${product.skuCode} quantity is not enough!`);
       }
       quantityTemp = product.quantity - quantity;
+      await Product.findByIdAndUpdate(
+        product._id,
+        { $set: { quantity: quantityTemp } },
+        { new: true }
+      ).session(session);
     }
-    await Product.findByIdAndUpdate(
-      product._id,
-      { $set: { quantity: quantityTemp } },
-      { new: true }
-    ).session(session);
     const newTransactionDetail = new TransactionDetail({
       productId,
       quantity,
@@ -87,9 +86,9 @@ const updateTransactionDetail = async (
     //Compute total price of the detail
     const total = product.price * quantity;
     const oldQuantity = product.quantity - detail.quantity;
+    const quantityTemp = oldQuantity + quantity;
     if (transaction.type === "Inbound") {
       //If transaction is inbound
-      const quantityTemp = oldQuantity + quantity;
       if (quantityTemp > product.maximumQuantity) {
         return res
           .status(409)
@@ -104,6 +103,12 @@ const updateTransactionDetail = async (
           .status(409)
           .send(`Product ${product.skuCode} quantity is not enough!`);
       }
+      quantityTemp = product.quantity - quantity;
+      await Product.findByIdAndUpdate(
+        product._id,
+        { $set: { quantity: quantityTemp } },
+        { new: true }
+      ).session(session);
     }
     const updatedDetail = await TransactionDetail.findByIdAndUpdate(
       detail._id,
@@ -118,7 +123,7 @@ const updateTransactionDetail = async (
   }
 };
 
-const deleteTransactionDetail = async (req, res, id, transaction, session) => {
+const deleteTransactionDetail = async (req, res, id, session) => {
   try {
     const detail = await TransactionDetail.findById(id).session(session);
     const product = await Product.findOne({

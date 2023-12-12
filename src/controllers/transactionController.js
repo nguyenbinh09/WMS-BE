@@ -98,6 +98,25 @@ const transactionController = {
     try {
       const inboundTransactions = await Transaction.find({
         type: "Inbound",
+        isDeleted: false,
+      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      if (!inboundTransactions) {
+        return res.status(404).send("Not found any inbound transactions");
+      }
+
+      res.status(200).json(inboundTransactions);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getInboundByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const inboundTransactions = await Transaction.find({
+        type: "Inbound",
+        warehouseId: warehouseId,
+        isDeleted: false,
       }).populate(["transactionDetails", "employeeId", "warehouseId"]);
       if (!inboundTransactions) {
         return res.status(404).send("Not found any inbound transactions");
@@ -113,6 +132,24 @@ const transactionController = {
     try {
       const outboundTransactions = await Transaction.find({
         type: "Outbound",
+        isDeleted: false,
+      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      if (!outboundTransactions) {
+        return res.status(404).send("Not found any outbound transactions");
+      }
+      res.status(200).json(outboundTransactions);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getOutboundByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const outboundTransactions = await Transaction.find({
+        type: "Outbound",
+        warehouseId: warehouseId,
+        isDeleted: false,
       }).populate(["transactionDetails", "employeeId", "warehouseId"]);
       if (!outboundTransactions) {
         return res.status(404).send("Not found any outbound transactions");
@@ -134,11 +171,11 @@ const transactionController = {
         if (!partner) {
           return res
             .status(404)
-            .send(`Supplier with code ${partner.code} is not found!`);
+            .send(`Partner with id ${partnerId} is not found!`);
         } else if (partner.isDeleted === true) {
           return res
             .status(404)
-            .send(`Supplier with code ${partner.code} is deleted!`);
+            .send(`${partner.type} with code ${partner.code} is deleted!`);
         }
       }
       const transaction = await Transaction.findById(id);
@@ -217,6 +254,7 @@ const transactionController = {
       await session.endSession();
     }
   },
+
   updateStatus: async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -226,50 +264,98 @@ const transactionController = {
       const transaction = await Transaction.findById(id)
         .session(session)
         .populate("transactionDetails");
-      if (status === "Done") {
-        if (transaction.type === "Inbound") {
-          const details = transaction.transactionDetails;
-          for (i = 0; i < details.length; i++) {
-            await Product.findByIdAndUpdate(
-              details[i].productId,
-              { $set: { quantity: details[i].quantity } },
-              { new: true }
-            ).session(session);
-          }
+      const details = transaction.transactionDetails;
+      if (status === "Done" && transaction.type === "Inbound") {
+        for (i = 0; i < details.length; i++) {
+          const product = await Product.findById(details[i].productId).session(
+            session
+          );
+          const tempQuantity = product.quantity + details[i].quantity;
+          await Product.findByIdAndUpdate(
+            product._id,
+            { $set: { quantity: tempQuantity } },
+            { new: true }
+          ).session(session);
         }
       }
-      if (status === "Returned") {
-        const details = transaction.transactionDetails;
-        if (transaction.type === "Inbound") {
-          for (i = 0; i < details.length; i++) {
-            const product = await Product.findById(
-              details[i].productId
-            ).session(session);
-            let tempQuantity = product.quantity - details[i].quantity;
-            if (tempQuantity < 0) tempQuantity = 0;
-            await Product.findByIdAndUpdate(
-              details[i].productId,
-              { $set: { quantity: tempQuantity } },
-              { new: true }
-            ).session(session);
-          }
-        } else {
-          for (i = 0; i < details.length; i++) {
-            const product = await Product.findById(
-              details[i].productId
-            ).session(session);
-            const tempQuantity = product.quantity + details[i].quantity;
-            await Product.findByIdAndUpdate(
-              details[i].productId,
-              { $set: { quantity: tempQuantity } },
-              { new: true }
-            ).session(session);
-          }
+      if (status === "Returned" && transaction.type === "Outbound") {
+        for (i = 0; i < details.length; i++) {
+          const product = await Product.findById(details[i].productId).session(
+            session
+          );
+          const tempQuantity = product.quantity + details[i].quantity;
+          await Product.findByIdAndUpdate(
+            product._id,
+            { $set: { quantity: tempQuantity } },
+            { new: true }
+          ).session(session);
         }
       }
+      await Transaction.findByIdAndUpdate(
+        id,
+        { $set: { status } },
+        { new: true }
+      ).session(session);
       res.status(201).json({
         success: true,
-        message: `New transaction  created successfully!`,
+        message: `Updated status successfully!`,
+      });
+      await session.commitTransaction();
+    } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
+      return res.status(500).json(error);
+    } finally {
+      // Ending the session
+      await session.endSession();
+    }
+  },
+
+  deleteTransaction: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const transaction = await Transaction.findById({
+        _id: id,
+        status: "Order",
+        isDeleted: false,
+      }).session(session);
+      if (!transaction) {
+        return res.status(404).send(`Transaction with id ${id} is not found!`);
+      } else if (transaction.isDeleted === true) {
+        return res
+          .status(404)
+          .send(`Transaction with code ${transaction.code} is deleted!`);
+      } else if (transaction.status !== "Order") {
+        return res
+          .status(404)
+          .send("The transaction is not in an editable state");
+      }
+      if (transaction.type === "Outbound") {
+        const details = transaction.transactionDetails;
+        for (i = 0; i < details.length; i++) {
+          const product = await Product.findById(details[i].productId).session(
+            session
+          );
+          const tempQuantity = product.quantity + details[i].quantity;
+          await Product.findByIdAndUpdate(
+            product._id,
+            { $set: { quantity: tempQuantity } },
+            { new: true }
+          ).session(session);
+        }
+      }
+      await Transaction.findByIdAndUpdate(
+        id,
+        { $set: { isDeleted: true } },
+        { new: true }
+      ).session(session);
+      res.status(201).json({
+        success: true,
+        message: `Deleted transaction successfully!`,
       });
       await session.commitTransaction();
     } catch (error) {

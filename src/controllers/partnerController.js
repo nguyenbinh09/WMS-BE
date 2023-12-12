@@ -91,6 +91,40 @@ const partnerController = {
     }
   },
 
+  getCustomerByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const partners = await Partner.find({
+        type: "Customer",
+        isDeleted: false,
+        warehouseId: warehouseId,
+      }).populate(["contactId"]);
+      if (!partners) {
+        return res.status(404).send("Not found any customers");
+      }
+      res.status(200).json(partners);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getSupplier: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const partners = await Partner.find({
+        type: "Supplier",
+        isDeleted: false,
+        warehouseId: warehouseId,
+      }).populate(["contactId"]);
+      if (!partners) {
+        return res.status(404).send("Not found any suppliers");
+      }
+      res.status(200).json(partners);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
   getSupplier: async (req, res) => {
     try {
       const partners = await Partner.find({
