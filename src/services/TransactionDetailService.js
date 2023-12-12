@@ -87,10 +87,9 @@ const updateTransactionDetail = async (
     //Compute total price of the detail
     const total = product.price * quantity;
     const oldQuantity = product.quantity - detail.quantity;
-    let quantityTemp = 0;
     if (transaction.type === "Inbound") {
-      //If transaction is inbound, quantity of the product will increase
-      quantityTemp = oldQuantity + quantity;
+      //If transaction is inbound
+      const quantityTemp = oldQuantity + quantity;
       if (quantityTemp > product.maximumQuantity) {
         return res
           .status(409)
@@ -99,19 +98,13 @@ const updateTransactionDetail = async (
           );
       }
     } else {
-      //If transaction is outbound, quantity of the product will descrease
+      //If transaction is outbound
       if (quantity > oldQuantity) {
         return res
           .status(409)
           .send(`Product ${product.skuCode} quantity is not enough!`);
       }
-      quantityTemp = oldQuantity - quantity;
     }
-    await Product.findByIdAndUpdate(
-      product._id,
-      { $set: { quantity: quantityTemp } },
-      { new: true }
-    ).session(session);
     const updatedDetail = await TransactionDetail.findByIdAndUpdate(
       detail._id,
       {
@@ -141,34 +134,7 @@ const deleteTransactionDetail = async (req, res, id, transaction, session) => {
         .status(410)
         .send(`Product with id ${detail.productId} is deleted`);
     }
-    if (transaction.type === "Inbound") {
-      //If transaction is inbound, quantity of the product will be decrease when we delete the detail
-      let oldQuantity = product.quantity - detail.quantity;
-      if (oldQuantity < 0) {
-        //If the product's quantity is reduced < 0, then the product's quantity will be = 0
-        oldQuantity = 0;
-        await Product.findByIdAndUpdate(
-          product._id,
-          { $set: { quantity: oldQuantity } },
-          { new: true }
-        ).session(session);
-      } else {
-        await Product.findByIdAndUpdate(
-          product._id,
-          { $set: { quantity: oldQuantity } },
-          { new: true }
-        ).session(session);
-      }
-    }
-    //If transaction is outbound, quantity of the product will be increase when we delete the detail
-    else {
-      const oldQuantity = product.quantity + detail.quantity;
-      await Product.findByIdAndUpdate(
-        product._id,
-        { $set: { quantity: oldQuantity } },
-        { new: true }
-      ).session(session);
-    }
+
     await TransactionDetail.findByIdAndDelete(detail._id).session(session);
     return detail;
   } catch (error) {

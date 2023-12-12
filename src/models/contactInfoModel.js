@@ -11,7 +11,7 @@ const contactInfoSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    default: "",
+    default: null,
   },
 });
 

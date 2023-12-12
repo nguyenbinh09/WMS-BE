@@ -32,7 +32,7 @@ const warehouseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Employee",
       unique: [true, "The manager is managing another warehouse!"],
-      default: "",
+      sparse: true,
     },
     isDeleted: {
       type: Boolean,
