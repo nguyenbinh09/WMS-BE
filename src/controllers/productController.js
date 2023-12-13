@@ -93,10 +93,9 @@ const productController = {
       newProduct.imageUrl = imageUrl;
 
       const savedProduct = await newProduct.save({ session });
-      await supplier.updateOne(
-        { $push: { products: savedProduct._id } },
-        { session }
-      );
+      await supplier
+        .updateOne({ $push: { products: savedProduct._id } })
+        .session(session);
       res.status(201).json({
         success: true,
         message: `New product ${savedProduct.code} created successfully!`,
@@ -115,9 +114,9 @@ const productController = {
 
   getAllProducts: async (req, res) => {
     try {
-      const products = await Product.find({ isDeleted: false }).populate(
-        "supplierId"
-      );
+      const products = await Product.find({ isDeleted: false })
+        .populate("supplierId")
+        .populate("warehouseId");
       res.status(200).json(products);
     } catch (error) {
       return res.status(500).json(error);
@@ -130,7 +129,9 @@ const productController = {
       const products = await Product.find({
         isDeleted: false,
         warehouseId: warehouseId,
-      }).populate("supplierId");
+      })
+        .populate("supplierId")
+        .populate("warehouseId");
       res.status(200).json(products);
     } catch (error) {
       return res.status(500).json(error);
@@ -139,9 +140,9 @@ const productController = {
 
   getAProduct: async (req, res) => {
     try {
-      const product = await Product.findById(req.params.id).populate(
-        "supplierId"
-      );
+      const product = await Product.findById(req.params.id)
+        .populate("supplierId")
+        .populate("warehouseId");
       res.status(200).json(product);
     } catch (error) {
       return res.status(500).json(error);
@@ -221,9 +222,10 @@ const productController = {
         imageUrl = result.url;
       }
       //update all changes
-      await Product.findByIdAndUpdate(
+      const updatedProduct = await Product.findByIdAndUpdate(
         id,
         {
+          name,
           code: newCode,
           maximumQuantity,
           price,
@@ -234,6 +236,7 @@ const productController = {
         },
         { new: true }
       ).session(session);
+
       res
         .status(200)
         .json(`Product with ${product.skuCode} updated Successfully`);

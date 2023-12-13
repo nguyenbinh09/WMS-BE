@@ -141,6 +141,7 @@ const authController = {
       return res.status(200).json({ accessToken: newAccessToken });
     });
   },
+
   logoutUser: async (req, res) => {
     res.clearCookie("refreshToken");
     refreshTokens = refreshTokens.filter(
@@ -148,6 +149,12 @@ const authController = {
     );
     return res.status(200).json("Logged out successfully!");
   },
+
+  //reset password
+  resetPassword: async (req, res) => {},
+
+  //forgot password
+  forgotPassword: async (req, res) => {},
 };
 
 //STORE TOKEN
