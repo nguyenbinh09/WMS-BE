@@ -110,11 +110,9 @@ const partnerController = {
 
   getSupplier: async (req, res) => {
     try {
-      const warehouseId = req.params.warehouseId;
       const partners = await Partner.find({
         type: "Supplier",
         isDeleted: false,
-        warehouseId: warehouseId,
       }).populate(["contactId"]);
       if (!partners) {
         return res.status(404).send("Not found any suppliers");
@@ -125,11 +123,13 @@ const partnerController = {
     }
   },
 
-  getSupplier: async (req, res) => {
+  getSupplierByWarehouseId: async (req, res) => {
     try {
+      const warehouseId = req.params.warehouseId;
       const partners = await Partner.find({
         type: "Supplier",
         isDeleted: false,
+        warehouseId: warehouseId,
       }).populate(["contactId"]);
       if (!partners) {
         return res.status(404).send("Not found any suppliers");
