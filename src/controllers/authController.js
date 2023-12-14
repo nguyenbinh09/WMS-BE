@@ -151,10 +151,10 @@ const authController = {
   },
 
   //reset password
-  resetPassword: async (req, res) => {},
+  resetPassword: async (req, res, next) => {},
 
   //forgot password
-  forgotPassword: async (req, res) => {},
+  forgotPassword: async (req, res, next) => {},
 };
 
 //STORE TOKEN
