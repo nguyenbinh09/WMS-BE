@@ -3,9 +3,35 @@ const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const generatePassword = require("generate-password");
 const bcrypt = require("bcrypt");
-const { mailTransport, UserPassword } = require("../utils/mail");
-
+const passwordValidator = require("password-validator");
+const {
+  mailTransport,
+  UserPassword,
+  generateOTP,
+  OTPTemplate,
+  ResetPasswordTemplate,
+} = require("../utils/mail");
 const dotenv = require("dotenv").config();
+const ResetToken = require("../models/resetTokenModel");
+const ContactInfo = require("../models/contactInfoModel");
+const { url } = require("../utils/helper");
+
+// init password validator
+let passwordSchema = new passwordValidator();
+
+// Add properties to it
+passwordSchema
+  .is()
+  .min(8) // Minimum length 8
+  .is()
+  .max(16) // Maximum length 16
+  .has()
+  .uppercase() // Must have uppercase letters
+  .has()
+  .lowercase() // Must have lowercase letters
+  .has()
+  .not()
+  .spaces(); // Should not have spaces
 
 let refreshTokens = [];
 const generatePasswordAuto = (email) => {
@@ -150,11 +176,185 @@ const authController = {
     return res.status(200).json("Logged out successfully!");
   },
 
+  //request change password
+  requestChangePassword: async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    const employee = await Employee.findById(user.employeeId).populate(
+      "contactId"
+    );
+    if (!user) return res.status(404).send("User not found, invalid request");
+
+    const token = await ResetToken.findOne({ owner: user._id });
+    if (token)
+      return res
+        .status(403)
+        .send("Only after one hour you can request for another token!");
+
+    // generate verification otp
+    const OTP = generateOTP();
+
+    const resetToken = new ResetToken({
+      owner: user._id,
+      token: OTP,
+    });
+
+    const result = await resetToken.save();
+
+    // send a mail that contain otp to the user's email
+    mailTransport().sendMail({
+      from: "HRManagement2003@gmail.com",
+      to: employee.contactId.email,
+      subject: "Otp to reset your password",
+      html: OTPTemplate(OTP),
+    });
+
+    res.status(200).json(result);
+  },
   //reset password
-  resetPassword: async (req, res, next) => {},
+  changePassword: async (req, res, next) => {
+    try {
+      const { newPassword, oldPassword, otp } = req.body;
+      console.log(newPassword, oldPassword);
+      if (!newPassword || !oldPassword || !otp.trim())
+        throw new BadRequestError("Invalid request!");
+
+      const { id } = req.params;
+      const user = await User.findById(id);
+      const employee = await Employee.findById(user.employeeId).populate(
+        "contactId"
+      );
+      if (!user) return res.status(404).send("User not found!");
+
+      const token = await ResetToken.findOne({ owner: user._id });
+      if (!token) return res.status(404).send("User not found!");
+      const isMatched = await token.compareToken(otp);
+      if (!isMatched)
+        return res.status(401).send("Please provide a valid OTP!");
+
+      const isSameOldPassword = await user.comparePassword(oldPassword);
+      if (!isSameOldPassword)
+        return res.status(401).send("Wrong password. Please check it again.");
+      const isSameNewPassword = await user.comparePassword(newPassword);
+      if (isSameNewPassword)
+        return res
+          .status(401)
+          .send("New password must be different from the old one!");
+
+      // validate password
+      const validateResult = passwordSchema.validate(newPassword.trim(), {
+        details: true,
+      });
+      if (validateResult.length !== 0) {
+        return res.status(401).send(validateResult);
+      }
+
+      user.password = newPassword.trim();
+      await user.save();
+
+      await ResetToken.findOneAndDelete({ owner: user._id });
+
+      mailTransport().sendMail({
+        from: process.env.MAILTRAN_USERNAME,
+        to: employee.contactId.email,
+        subject: "Change Password Successfully",
+        html: ResetPasswordTemplate(),
+      });
+
+      res
+        .status(200)
+        .json({ Status: "Success", message: "Changed password successfully" });
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+  },
 
   //forgot password
-  forgotPassword: async (req, res, next) => {},
+  forgotPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+      const contact = await ContactInfo.findOne({ email: email });
+      const employee = await Employee.findById(contact._id);
+      const user = await User.findById(employee._id);
+      if (!user) return res.status(404).send("User not found, invalid request");
+
+      const token = await ResetToken.findOne({ owner: user.id });
+      if (token)
+        return res
+          .status(403)
+          .send("Only after 5 minutes you can request for another token!");
+
+      // generate verification otp
+      const OTP = generateOTP();
+
+      const resetToken = new ResetToken({
+        owner: user._id,
+        token: OTP,
+      });
+
+      const result = await resetToken.save();
+
+      // send a mail that contain otp to the user's email
+      mailTransport().sendMail({
+        from: process.env.MAILTRAN_USERNAME,
+        to: employee.contactId.email,
+        subject: "Change Password Successfully",
+        html: OTPTemplate(),
+      });
+
+      res.status(200).json(result);
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      const { password, otp } = req.body;
+      if (!password || !otp.trim())
+        return res.status(401).send("Invalid request!");
+
+      const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).send("User not found!");
+
+      const token = await ResetToken.findOne({ owner: user._id });
+      if (!token) return res.status(404).send("User not found!");
+      const isMatched = await token.compareToken(otp);
+      if (!isMatched)
+        return res.status(401).send("Please provide a valid OTP!");
+
+      const isSamePassword = await user.comparePassword(password);
+      if (isSamePassword)
+        return res
+          .status(401)
+          .send("New password must be different from the old one!");
+
+      // validate password
+      const validateResult = passwordSchema.validate(password.trim(), {
+        details: true,
+      });
+      if (validateResult.length !== 0) {
+        return res.status(401).send(validateResult);
+      }
+
+      user.password = password.trim();
+      await user.save();
+      await ResetToken.findOneAndDelete({ owner: user.id });
+
+      mailTransport().sendMail({
+        from: "HRManagement2003@gmail.com",
+        to: user.email,
+        subject: "Password Reset Successfully",
+        html: ResetPasswordTemplate(url),
+      });
+
+      res
+        .status(200)
+        .json({ Status: "Success", message: "Password Reset Successfully" });
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+  },
 };
 
 //STORE TOKEN

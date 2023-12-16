@@ -7,6 +7,7 @@ const createTransactionDetail = async (
   res,
   productId,
   quantity,
+  total,
   session,
   transaction
 ) => {
@@ -23,7 +24,6 @@ const createTransactionDetail = async (
       return res.status(410).send(`Product with id ${productId} is deleted`);
     }
     //Compute total price of the detail
-    const total = product.price * quantity;
     let quantityTemp = 0;
     if (transaction.type === "Inbound") {
       quantityTemp = product.quantity + quantity;
@@ -84,7 +84,6 @@ const updateTransactionDetail = async (
     }
     const detail = await TransactionDetail.findById(id).session(session);
     //Compute total price of the detail
-    const total = product.price * quantity;
     const oldQuantity = product.quantity - detail.quantity;
     const quantityTemp = oldQuantity + quantity;
     if (transaction.type === "Inbound") {
