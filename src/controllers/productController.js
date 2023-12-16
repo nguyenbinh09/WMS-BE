@@ -73,7 +73,7 @@ const productController = {
       if (req.file) {
         try {
           result = await cloudinary.uploader.upload(req.file.path, {
-            public_id: `${newProduct._id}_profile`,
+            public_id: `${newProduct._id}_view`,
             width: 500,
             height: 500,
             crop: "fill",
@@ -204,7 +204,7 @@ const productController = {
       if (req.file) {
         try {
           result = await cloudinary.uploader.upload(req.file.path, {
-            public_id: `${product._id}_profile`,
+            public_id: `${product._id}_view`,
             width: 500,
             height: 500,
             crop: "fill",
