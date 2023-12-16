@@ -67,6 +67,7 @@ const updateTransactionDetail = async (
   id,
   productId,
   quantity,
+  total,
   session,
   transaction
 ) => {
