@@ -32,8 +32,8 @@ const transactionController = {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const { type, employeeId, partnerId, warehouseId, details } = req.body;
-      let total = 0;
+      const { type, employeeId, partnerId, warehouseId, details, total } =
+        req.body;
       const newTransaction = new Transaction(
         {
           code: await generateTransactionCode(warehouseId, type, session),
@@ -56,7 +56,6 @@ const transactionController = {
           savedTransaction
         );
         if (transactionDetail) {
-          total += transactionDetail.total;
           await savedTransaction
             .updateOne({
               $push: { transactionDetails: transactionDetail._id },
@@ -84,7 +83,12 @@ const transactionController = {
     try {
       const transactions = await Transaction.find({
         isDeleted: false,
-      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
       if (!transactions) {
         return res.status(404).send("Not found any transactions");
       }
@@ -99,7 +103,12 @@ const transactionController = {
       const inboundTransactions = await Transaction.find({
         type: "Inbound",
         isDeleted: false,
-      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
       if (!inboundTransactions) {
         return res.status(404).send("Not found any inbound transactions");
       }
@@ -117,7 +126,12 @@ const transactionController = {
         type: "Inbound",
         warehouseId: warehouseId,
         isDeleted: false,
-      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
       if (!inboundTransactions) {
         return res.status(404).send("Not found any inbound transactions");
       }
@@ -133,7 +147,12 @@ const transactionController = {
       const outboundTransactions = await Transaction.find({
         type: "Outbound",
         isDeleted: false,
-      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
       if (!outboundTransactions) {
         return res.status(404).send("Not found any outbound transactions");
       }
@@ -150,7 +169,12 @@ const transactionController = {
         type: "Outbound",
         warehouseId: warehouseId,
         isDeleted: false,
-      }).populate(["transactionDetails", "employeeId", "warehouseId"]);
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
       if (!outboundTransactions) {
         return res.status(404).send("Not found any outbound transactions");
       }
@@ -179,7 +203,6 @@ const transactionController = {
         }
       }
       const transaction = await Transaction.findById(id);
-      let total = 0;
       for (i = 0; i < details.length; i++) {
         let transactionDetail;
         //If update transaction detail existing
@@ -193,9 +216,6 @@ const transactionController = {
             session,
             transaction
           );
-          if (transactionDetail) {
-            total += transactionDetail.total;
-          }
         }
         //If add new transaction detail
         else if (details[i].action === "new") {
@@ -208,7 +228,6 @@ const transactionController = {
             transaction
           );
           if (transactionDetail) {
-            total += transactionDetail.total;
             await Transaction.findByIdAndUpdate(
               id,
               {
