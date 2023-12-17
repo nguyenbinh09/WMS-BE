@@ -114,9 +114,10 @@ const productController = {
 
   getAllProducts: async (req, res) => {
     try {
-      const products = await Product.find({ isDeleted: false })
-        .populate("supplierId")
-        .populate("warehouseId");
+      const products = await Product.find({ isDeleted: false }).populate([
+        "warehouseId",
+        "supplierId",
+      ]);
       res.status(200).json(products);
     } catch (error) {
       return res.status(500).json(error);
@@ -140,9 +141,10 @@ const productController = {
 
   getAProduct: async (req, res) => {
     try {
-      const product = await Product.findById(req.params.id)
-        .populate("supplierId")
-        .populate("warehouseId");
+      const product = await Product.findById(req.params.id).populate([
+        "warehouseId",
+        "supplierId",
+      ]);
       res.status(200).json(product);
     } catch (error) {
       return res.status(500).json(error);

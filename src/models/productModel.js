@@ -48,9 +48,9 @@ const productSchema = new mongoose.Schema({
     ref: "Warehouse",
   },
   supplierId: {
-    type: String, //mongoose.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     required: true,
-    //ref: "Supplier",
+    ref: "Partner",
   },
   isDeleted: {
     type: Boolean,
