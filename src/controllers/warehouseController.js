@@ -97,12 +97,13 @@ const warehouseController = {
         "contactId",
         "managerId",
       ]);
+      console.log(warehouse.createdAt);
       if (warehouse && warehouse.isDeleted === false) {
         res.status(200).json(warehouse);
       } else if (warehouse && warehouse.isDeleted === true) {
         return res.status(410).send("Warehouse is deleted");
       } else {
-        return res.status(500).send("Not found any warehouses");
+        return res.status(404).send("Not found any warehouses");
       }
     } catch (error) {
       return res.status(500).json(error);
