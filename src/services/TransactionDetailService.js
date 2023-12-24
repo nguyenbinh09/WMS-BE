@@ -17,29 +17,46 @@ const createTransactionDetail = async (
       isDeleted: false,
     }).session(session);
     if (!product)
-      return res
-        .status(404)
-        .send(`The product with id ${productId} does not exists`);
+      return {
+        error: true,
+        statusCode: 404,
+        message: `The product with id ${productId} does not exists`,
+      };
     else if (product.isDeleted === true) {
-      return res.status(410).send(`Product with id ${productId} is deleted`);
+      // return res.status(410).send(`Product with id ${productId} is deleted`);
+      return {
+        error: true,
+        statusCode: 410,
+        message: `Product with id ${productId} is deleted`,
+      };
     }
     //Compute total price of the detail
     let quantityTemp = 0;
     if (transaction.type === "Inbound") {
       quantityTemp = product.quantity + quantity;
       if (quantityTemp > product.maximumQuantity) {
-        return res
-          .status(409)
-          .send(
-            `The quantity of product ${product.skuCode} has exceeded the maximum quantity!`
-          );
+        // return res
+        //   .status(409)
+        //   .send(
+        //     `The quantity of product ${product.skuCode} has exceeded the maximum quantity!`
+        //   );
+        return {
+          error: true,
+          statusCode: 409,
+          message: `The quantity of product ${product.skuCode} has exceeded the maximum quantity!`,
+        };
       }
     } else {
       //If transaction is outbound, quantity of the product will descrease
       if (quantity > product.quantity) {
-        return res
-          .status(409)
-          .send(`Product ${product.skuCode} quantity is not enough!`);
+        // return res
+        //   .status(409)
+        //   .send(`Product ${product.skuCode} quantity is not enough!`);
+        return {
+          error: true,
+          statusCode: 409,
+          message: `Product ${product.skuCode} quantity is not enough!`,
+        };
       }
       quantityTemp = product.quantity - quantity;
       await Product.findByIdAndUpdate(
@@ -77,11 +94,21 @@ const updateTransactionDetail = async (
       isDeleted: false,
     }).session(session);
     if (!product)
-      return res
-        .status(404)
-        .send(`The product with id ${productId} does not exists`);
+      // return res
+      //   .status(404)
+      //   .send(`The product with id ${productId} does not exists`);
+      return {
+        error: true,
+        statusCode: 404,
+        message: `The product with id ${productId} does not exists`,
+      };
     else if (product.isDeleted === true) {
-      return res.status(410).send(`Product with id ${productId} is deleted`);
+      // return res.status(410).send(`Product with id ${productId} is deleted`);
+      return {
+        error: true,
+        statusCode: 410,
+        message: `Product with id ${productId} is deleted`,
+      };
     }
     const detail = await TransactionDetail.findById(id).session(session);
     //Compute total price of the detail
@@ -90,18 +117,20 @@ const updateTransactionDetail = async (
     if (transaction.type === "Inbound") {
       //If transaction is inbound
       if (quantityTemp > product.maximumQuantity) {
-        return res
-          .status(409)
-          .send(
-            `The quantity of product ${product.skuCode} has exceeded the maximum quantity!`
-          );
+        return {
+          error: true,
+          statusCode: 409,
+          message: `The quantity of product ${product.skuCode} has exceeded the maximum quantity!`,
+        };
       }
     } else {
       //If transaction is outbound
       if (quantity > oldQuantity) {
-        return res
-          .status(409)
-          .send(`Product ${product.skuCode} quantity is not enough!`);
+        return {
+          error: true,
+          statusCode: 409,
+          message: `Product ${product.skuCode} quantity is not enough!`,
+        };
       }
       quantityTemp = product.quantity - quantity;
       await Product.findByIdAndUpdate(
@@ -123,21 +152,20 @@ const updateTransactionDetail = async (
   }
 };
 
-const deleteTransactionDetail = async (req, res, id, session) => {
+const deleteTransactionDetail = async (req, res, id, session, transaction) => {
   try {
     const detail = await TransactionDetail.findById(id).session(session);
     const product = await Product.findOne({
       _id: detail.productId,
       isDeleted: false,
     }).session(session);
-    if (!product)
-      return res
-        .status(404)
-        .send(`The product with id ${detail.productId} does not exists`);
-    else if (product.isDeleted === true) {
-      return res
-        .status(410)
-        .send(`Product with id ${detail.productId} is deleted`);
+    if (product && transaction.type === "Outbound") {
+      const oldQuantity = product.quantity + detail.quantity;
+      await Product.findByIdAndUpdate(
+        product._id,
+        { $set: { quantity: oldQuantity } },
+        { new: true }
+      ).session(session);
     }
 
     await TransactionDetail.findByIdAndDelete(detail._id).session(session);

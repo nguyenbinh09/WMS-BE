@@ -76,7 +76,6 @@ const authController = {
         employeeId: employeeId,
         password: generatePasswordAuto(employee.contactId.email),
       });
-      console.log(employee);
       //Save to DB
       const user = await newUser.save();
       return res

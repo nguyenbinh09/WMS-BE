@@ -90,7 +90,6 @@ const employeeController = {
             crop: "fill",
           });
         } catch (err) {
-          console.log(err);
           return res
             .status(500)
             .send("Unable to upload image, please try again");

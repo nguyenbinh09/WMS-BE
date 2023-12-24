@@ -46,6 +46,7 @@ const transactionController = {
         { session }
       );
       const savedTransaction = await newTransaction.save({ session });
+
       for (i = 0; i < details.length; i++) {
         let transactionDetail = await createTransactionDetail(
           req,
@@ -64,6 +65,7 @@ const transactionController = {
             .session(session);
         }
       }
+
       res.status(201).json({
         success: true,
         message: `New transaction ${savedTransaction.code} created successfully!`,
@@ -191,7 +193,6 @@ const transactionController = {
     try {
       const { id } = req.params;
       const { partnerId, total, details } = req.body;
-      console.log(req.body);
       if (partnerId) {
         const partner = await Partner.findById(partnerId).session(session);
         if (!partner) {
@@ -207,6 +208,31 @@ const transactionController = {
       const transaction = await Transaction.findById(id).session(session);
 
       if (details) {
+        //If delete transaction detail existing
+        for (i = 0; i < transaction.transactionDetails.length; i++) {
+          const obj = details.find(
+            (o) => o.id === transaction.transactionDetails[i].toString()
+          );
+          if (!obj) {
+            const transactionDetail = await deleteTransactionDetail(
+              req,
+              res,
+              transaction.transactionDetails[i],
+              session,
+              transaction
+            );
+            if (transactionDetail) {
+              await Transaction.findByIdAndUpdate(
+                id,
+                {
+                  $pull: { transactionDetails: transactionDetail._id },
+                },
+                { new: true }
+              ).session(session);
+            }
+            console.log("ok");
+          }
+        }
         for (i = 0; i < details.length; i++) {
           let transactionDetail;
           //If update transaction detail existing
@@ -221,6 +247,11 @@ const transactionController = {
               session,
               transaction
             );
+            if (transactionDetail.error === true) {
+              return res
+                .status(transactionDetail.statusCode)
+                .send(transactionDetail.message);
+            }
           }
           //If add new transaction detail
           else if (details[i].action === "new") {
@@ -243,25 +274,6 @@ const transactionController = {
               ).session(session);
             }
           }
-          //If delete transaction detail existing
-          else if (details[i].action === "delete") {
-            transactionDetail = await deleteTransactionDetail(
-              req,
-              res,
-              details[i].id,
-              session,
-              transaction
-            );
-            if (transactionDetail) {
-              await Transaction.findByIdAndUpdate(
-                id,
-                {
-                  $pull: { transactionDetails: transactionDetail._id },
-                },
-                { new: true }
-              ).session(session);
-            }
-          }
         }
       }
       const updatedTransaction = await Transaction.findByIdAndUpdate(
@@ -269,7 +281,6 @@ const transactionController = {
         { $set: { partnerId, total } },
         { new: true }
       ).session(session);
-
       res.status(201).json({
         success: true,
         message: `Updated transaction successfully!`,
@@ -352,17 +363,14 @@ const transactionController = {
       const transaction = await Transaction.findById({
         _id: id,
         status: "Order",
-        isDeleted: false,
-      }).session(session);
+      })
+        .session(session)
+        .populate("transactionDetails");
       if (!transaction) {
         return res.status(404).send(`Transaction with id ${id} is not found!`);
-      } else if (transaction.isDeleted === true) {
-        return res
-          .status(404)
-          .send(`Transaction with code ${transaction.code} is deleted!`);
       } else if (transaction.status !== "Order") {
         return res
-          .status(404)
+          .status(401)
           .send("The transaction is not in an editable state");
       }
       if (transaction.type === "Outbound") {

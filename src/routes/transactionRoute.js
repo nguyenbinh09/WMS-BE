@@ -15,5 +15,5 @@ router.get(
 );
 router.put("/:id", transactionController.updateTransaction);
 router.put("/status/:id", transactionController.updateStatus);
-
+router.delete("/:id", transactionController.deleteTransaction);
 module.exports = router;

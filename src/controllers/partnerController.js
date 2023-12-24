@@ -23,7 +23,7 @@ const partnerController = {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const { name, type, email, phone_num, address } = req.body;
+      const { name, type, email, phone_num, address, warehouseId } = req.body;
       const isEmail = validator.isEmail(email);
       if (!isEmail && email !== null) {
         return res.status(400).send("Email is not invalid!");
@@ -39,6 +39,7 @@ const partnerController = {
           code: await generatePartnerCode(type, session),
           type,
           contactId: newContact._id,
+          warehouseId,
         },
         { session }
       );
