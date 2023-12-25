@@ -230,7 +230,6 @@ const transactionController = {
                 { new: true }
               ).session(session);
             }
-            console.log("ok");
           }
         }
         for (i = 0; i < details.length; i++) {
