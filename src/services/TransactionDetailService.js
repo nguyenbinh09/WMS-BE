@@ -113,8 +113,9 @@ const updateTransactionDetail = async (
     const detail = await TransactionDetail.findById(id).session(session);
     //Compute total price of the detail
     const oldQuantity = product.quantity - detail.quantity;
-    const quantityTemp = oldQuantity + quantity;
+    let quantityTemp;
     if (transaction.type === "Inbound") {
+      quantityTemp = oldQuantity + quantity;
       //If transaction is inbound
       if (quantityTemp > product.maximumQuantity) {
         return {
@@ -133,6 +134,7 @@ const updateTransactionDetail = async (
         };
       }
       quantityTemp = product.quantity - quantity;
+      console.log(quantityTemp);
       await Product.findByIdAndUpdate(
         product._id,
         { $set: { quantity: quantityTemp } },
