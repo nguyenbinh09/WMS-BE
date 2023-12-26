@@ -37,6 +37,11 @@ const partnerSchema = new mongoose.Schema(
       required: true,
       ref: "Warehouse",
     },
+    createdAt: {
+      type: Date,
+      required: true,
+      default: new Date(),
+    },
   },
   { timestamps: true }
 );

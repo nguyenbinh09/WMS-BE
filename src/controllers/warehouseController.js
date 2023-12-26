@@ -162,7 +162,11 @@ const warehouseController = {
           return res
             .status(410)
             .send(`Manager with id ${managerId} is deleted`);
-        } else if (manager.warehouseId) {
+        } else if (
+          manager.warehouseId &&
+          managerId !== warehouse.managerId.toString()
+        ) {
+          console.log(managerId !== warehouse.managerId.toString());
           return res
             .status(400)
             .send(
