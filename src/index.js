@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 const employeeRoute = require("./routes/employeeRoute");
 const transactionRoute = require("./routes/transactionRoute");
 const partnerRoute = require("./routes/partnerRoute");
+const reportRoute = require("./routes/reportRoute");
 
 //Connect DB
 mongoose
@@ -39,6 +40,7 @@ app.use("/api/product", productRoute);
 app.use("/api/employee", employeeRoute);
 app.use("/api/transaction", transactionRoute);
 app.use("/api/partner", partnerRoute);
+app.use("/api/report", reportRoute);
 
 app.listen(port, () => {
   console.log("Server is running in port ", +port);

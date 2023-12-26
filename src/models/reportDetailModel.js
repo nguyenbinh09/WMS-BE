@@ -9,7 +9,15 @@ const reportDetailSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    productId: {},
+    productId: {
+      type: mongoose.Types.ObjectId,
+      required: true,
+    },
+    reportId: {
+      type: mongoose.Types.ObjectId,
+      required: true,
+      unique: true,
+    },
   },
   { timestamps: true }
 );

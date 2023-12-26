@@ -1,6 +1,5 @@
 const Product = require("../models/productModel");
 const TransactionDetail = require("../models/transactionDetailModel");
-const Transaction = require("../models/transactionModel");
 
 const createTransactionDetail = async (
   req,
@@ -65,12 +64,15 @@ const createTransactionDetail = async (
         { new: true }
       ).session(session);
     }
-    const newTransactionDetail = new TransactionDetail({
-      productId,
-      quantity,
-      total,
-      transactionId: transaction._id,
-    });
+    const newTransactionDetail = new TransactionDetail(
+      {
+        productId,
+        quantity,
+        total,
+        transactionId: transaction._id,
+      },
+      { session }
+    );
     const savedTransaction = await newTransactionDetail.save({ session });
     return savedTransaction;
   } catch (error) {
