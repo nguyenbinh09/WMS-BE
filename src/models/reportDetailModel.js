@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const reportDetailSchema = new mongoose.Schema(
   {
+    actualQuantity: {
+      type: Number,
+      required: true,
+    },
     differenceQuantity: {
       type: Number,
       required: true,
@@ -17,6 +21,11 @@ const reportDetailSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
       unique: true,
+    },
+    createdAt: {
+      type: Date,
+      required: true,
+      default: new Date(),
     },
   },
   { timestamps: true }

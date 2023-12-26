@@ -6,6 +6,7 @@ const createReportDetail = async (
   res,
   productId,
   description,
+  actualQuantity,
   differenceQuantity,
   report,
   session
@@ -30,11 +31,10 @@ const createReportDetail = async (
         message: `Product with id ${productId} is deleted`,
       };
     }
-    const tempQuantity = product.quantity + differenceQuantity;
     if (differenceQuantity !== 0) {
       await Product.findByIdAndUpdate(
         product._id,
-        { $set: { quantity: tempQuantity } },
+        { $set: { quantity: actualQuantity } },
         { new: true }
       ).session(session);
     }
@@ -42,6 +42,7 @@ const createReportDetail = async (
       {
         productId,
         description,
+        actualQuantity,
         differenceQuantity,
         reportId: report._id,
       },

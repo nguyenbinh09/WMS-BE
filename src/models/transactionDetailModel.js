@@ -19,6 +19,11 @@ const transactionDetailSchema = new mongoose.Schema({
     required: true,
     ref: "Transaction",
   },
+  createdAt: {
+    type: Date,
+    required: true,
+    default: new Date(),
+  },
 });
 
 const TransactionDetail = mongoose.model(

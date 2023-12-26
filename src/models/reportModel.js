@@ -14,7 +14,7 @@ const reportSchema = new mongoose.Schema(
         ref: "ReportDetail",
       },
     ],
-    actualQuantity: {
+    totalDiffQuantity: {
       type: Number,
       required: true,
     },
@@ -35,6 +35,11 @@ const reportSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
       ref: "Employee",
+    },
+    createdAt: {
+      type: Date,
+      required: true,
+      default: new Date(),
     },
   },
   { timestamps: true }

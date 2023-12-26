@@ -18,7 +18,7 @@ const reportController = {
     session.startTransaction();
     try {
       const {
-        actualQuantity,
+        totalDiffQuantity,
         increaseQuantity,
         decreaseQuantity,
         managerId,
@@ -28,7 +28,7 @@ const reportController = {
       const newReport = new Report(
         {
           code: await generateReportCode(warehouseId, session),
-          actualQuantity,
+          totalDiffQuantity,
           increaseQuantity,
           decreaseQuantity,
           warehouseId,
@@ -43,6 +43,7 @@ const reportController = {
           res,
           details[i].productId,
           details[i].description,
+          details[i].actualQuantity,
           details[i].differenceQuantity,
           savedReport,
           session
