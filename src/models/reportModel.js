@@ -7,7 +7,7 @@ const reportSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    reportDetail: [
+    reportDetails: [
       {
         type: mongoose.Types.ObjectId,
         required: true,
@@ -25,6 +25,16 @@ const reportSchema = new mongoose.Schema(
     decreaseQuantity: {
       type: Number,
       required: true,
+    },
+    warehouseId: {
+      type: mongoose.Types.ObjectId,
+      required: true,
+      ref: "Warehouse",
+    },
+    managerId: {
+      type: mongoose.Types.ObjectId,
+      required: true,
+      ref: "Employee",
     },
   },
   { timestamps: true }

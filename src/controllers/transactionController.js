@@ -13,10 +13,9 @@ const Product = require("../models/productModel");
 const generateTransactionCode = async (warehouseId, type, session) => {
   const warehouse = await Warehouse.findById(warehouseId).session(session);
   const warehouseCode = warehouse.code;
-  const transactionAmount = await Transaction.countDocuments(
-    { type: type },
-    { session }
-  );
+  const transactionAmount = await Transaction.countDocuments({
+    type: type,
+  }).session(session);
   const transactionAmountStr = String(transactionAmount).padStart(4, "0");
   let transactionCode = "";
   if (type === "Inbound") {
@@ -58,6 +57,11 @@ const transactionController = {
           savedTransaction
         );
         if (transactionDetail) {
+          if (transactionDetail.error === true) {
+            return res
+              .status(transactionDetail.statusCode)
+              .send(transactionDetail.message);
+          }
           await savedTransaction
             .updateOne({
               $push: { transactionDetails: transactionDetail._id },
