@@ -14,6 +14,10 @@ const reportSchema = new mongoose.Schema(
         ref: "ReportDetail",
       },
     ],
+    totalActualQuantity: {
+      type: Number,
+      required: true,
+    },
     totalDiffQuantity: {
       type: Number,
       required: true,
