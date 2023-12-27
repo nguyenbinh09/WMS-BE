@@ -18,6 +18,7 @@ const reportController = {
     session.startTransaction();
     try {
       const {
+        totalActualQuantity,
         totalDiffQuantity,
         increaseQuantity,
         decreaseQuantity,
