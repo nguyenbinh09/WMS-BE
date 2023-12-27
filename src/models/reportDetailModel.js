@@ -20,7 +20,6 @@ const reportDetailSchema = new mongoose.Schema(
     reportId: {
       type: mongoose.Types.ObjectId,
       required: true,
-      unique: true,
     },
     createdAt: {
       type: Date,
