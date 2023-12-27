@@ -28,6 +28,7 @@ const reportController = {
       const newReport = new Report(
         {
           code: await generateReportCode(warehouseId, session),
+          totalActualQuantity,
           totalDiffQuantity,
           increaseQuantity,
           decreaseQuantity,

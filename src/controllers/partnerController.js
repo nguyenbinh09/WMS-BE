@@ -25,8 +25,16 @@ const partnerController = {
     try {
       const { name, type, email, phone_num, address, warehouseId } = req.body;
       const isEmail = validator.isEmail(email);
-      if (!isEmail && email !== null) {
-        return res.status(400).send("Email is not invalid!");
+      if (email) {
+        if (email) {
+          const contact = await ContactInfo.findOne({
+            email: email,
+            isDeleted: false,
+          });
+          if (contact) {
+            return res.status(401).send("The email has already existed");
+          }
+        }
       }
       const newContact = new ContactInfo(
         { address, phone_num, email },
@@ -149,9 +157,14 @@ const partnerController = {
       const { name, email, phone_num, address } = req.body;
       const partner = await Partner.findById(id);
       if (email) {
-        const isEmail = validator.isEmail(email);
-        if (!isEmail && email !== null) {
-          return res.status(400).send("Email is not invalid!");
+        if (email) {
+          const contact = await ContactInfo.findOne({
+            email: email,
+            isDeleted: false,
+          });
+          if (contact) {
+            return res.status(401).send("The email has already existed");
+          }
         }
       }
       await ContactInfo.findByIdAndUpdate(
@@ -193,6 +206,9 @@ const partnerController = {
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);
+      if (!partner) {
+        return res.status(404).json(`The partner is not found!`);
+      }
       if (partner.type === "Supplier") {
         for (i = 0; i < partner.products.length; i++) {
           await Product.findOneAndUpdate(
@@ -202,9 +218,11 @@ const partnerController = {
           ).session(session);
         }
       }
-      if (!partner) {
-        return res.status(404).json(`The partner is not found!`);
-      }
+      await ContactInfo.findByIdAndUpdate(
+        partner.contactId,
+        { $set: { isDeleted: true } },
+        { new: true }
+      ).session(session);
       res
         .status(200)
         .json(`Deleted ${partner.type.toLowerCase()} successfully!`);

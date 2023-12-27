@@ -48,9 +48,15 @@ const employeeController = {
       const startdate = parse(startDate, "dd/MM/yyyy", new Date());
       const isoStartDateStr = format(startdate, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-      const isEmail = validator.isEmail(email);
-      if (!isEmail && email !== null) {
-        return res.status(400).send("Email is not invalid!");
+      //edit email
+      if (email) {
+        const contact = await ContactInfo.findOne({
+          email: email,
+          isDeleted: false,
+        });
+        if (contact) {
+          return res.status(401).send("The email has already existed");
+        }
       }
       const newContact = new ContactInfo(
         { address, phone_num, email },
@@ -113,7 +119,9 @@ const employeeController = {
       }
       res.status(201).json({
         success: true,
-        message: `New product ${savedemployee.code} created successfully!`,
+        message: `New ${savedemployee.position.toLowerCase()} ${
+          savedemployee.code
+        } created successfully!`,
       });
       await session.commitTransaction();
     } catch (error) {
@@ -260,9 +268,12 @@ const employeeController = {
       }
       //edit email
       if (email) {
-        const isEmail = validator.isEmail(email);
-        if (!isEmail && email !== null) {
-          return res.status(400).send("Email is not invalid!");
+        const contact = await ContactInfo.findOne({
+          email: email,
+          isDeleted: false,
+        });
+        if (contact) {
+          return res.status(401).send("The email has already existed");
         }
       }
       //edit contact
@@ -349,6 +360,11 @@ const employeeController = {
       ).session(session);
       await User.findOneAndUpdate(
         { employeeId: employee._id, isDeleted: false },
+        { $set: { isDeleted: true } },
+        { new: true }
+      ).session(session);
+      await ContactInfo.findByIdAndUpdate(
+        employee.contactId,
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);

@@ -53,6 +53,17 @@ const warehouseController = {
             );
         }
       }
+      if (email) {
+        if (email) {
+          const contact = await ContactInfo.findOne({
+            email: email,
+            isDeleted: false,
+          });
+          if (contact) {
+            return res.status(401).send("The email has already existed");
+          }
+        }
+      }
       const newContact = new ContactInfo(
         { address, phone_num, email },
         { session }
@@ -209,9 +220,14 @@ const warehouseController = {
         ).session(session);
       }
       if (email) {
-        const isEmail = validator.isEmail(email);
-        if (!isEmail && email !== null) {
-          return res.status(400).send("Email is not invalid!");
+        if (email) {
+          const contact = await ContactInfo.findOne({
+            email: email,
+            isDeleted: false,
+          });
+          if (contact) {
+            return res.status(401).send("The email has already existed");
+          }
         }
       }
       await ContactInfo.findByIdAndUpdate(
@@ -276,8 +292,13 @@ const warehouseController = {
             `There are still products in the warehouse. Please check again!`
           );
       }
-      await Warehouse.findByIdAndUpdate(
+      const warehouse = await Warehouse.findByIdAndUpdate(
         id,
+        { $set: { isDeleted: true } },
+        { new: true }
+      ).session(session);
+      await ContactInfo.findByIdAndUpdate(
+        warehouse.contactId,
         { $set: { isDeleted: true } },
         { new: true }
       ).session(session);
