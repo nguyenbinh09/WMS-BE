@@ -137,9 +137,10 @@ const employeeController = {
 
   getAllEmployees: async (req, res) => {
     try {
-      const employees = await Employee.find({
-        isDeleted: false,
-      }).populate(["contactId", "warehouseId"]);
+      const employees = await Employee.find().populate([
+        "contactId",
+        "warehouseId",
+      ]);
       if (!employees) {
         return res.status(404).send("Not found any employees");
       }

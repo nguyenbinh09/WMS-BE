@@ -123,7 +123,7 @@ const warehouseController = {
 
   getAllWarehouse: async (req, res) => {
     try {
-      const warehouses = await Warehouse.find({ isDeleted: false }).populate([
+      const warehouses = await Warehouse.find().populate([
         "contactId",
         "managerId",
       ]);

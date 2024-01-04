@@ -4,20 +4,19 @@ const Product = require("../models/productModel");
 const Warehouse = require("../models/warehouseModel");
 const mongoose = require("mongoose");
 const cloudinary = require("../utils/helper");
+const { compareSync } = require("bcrypt");
 
 const skuCodeGenerator = async (name, warehouseId, session) => {
   const firstValue = name.substring(0, 2);
   const warehouse = await Warehouse.findOne({ _id: warehouseId }).session(
     session
   );
-
   const secondValue = warehouse.code.substring(0, 2);
-  const productAmount = await Product.countDocuments({
-    isDeleted: false,
-  }).session(session);
+  const productAmount = await Product.countDocuments();
   const count = String(productAmount).padStart(4, "0");
   const sku = firstValue + count + secondValue;
   const sku1 = sku.toUpperCase();
+  console.log(sku1);
   return sku1;
 };
 
@@ -93,13 +92,15 @@ const productController = {
       newProduct.imageUrl = imageUrl;
 
       const savedProduct = await newProduct.save({ session });
+
       await supplier
         .updateOne({ $push: { products: savedProduct._id } })
         .session(session);
       res.status(201).json({
         success: true,
-        message: `New product ${savedProduct.code} created successfully!`,
+        message: `New product ${savedProduct.skuCode} created successfully!`,
       });
+      console.log(savedProduct);
       await session.commitTransaction();
     } catch (error) {
       // Rollback any changes made in the database
@@ -114,7 +115,7 @@ const productController = {
 
   getAllProducts: async (req, res) => {
     try {
-      const products = await Product.find({ isDeleted: false }).populate([
+      const products = await Product.find().populate([
         "warehouseId",
         "supplierId",
       ]);
