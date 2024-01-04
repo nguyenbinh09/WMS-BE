@@ -40,6 +40,9 @@ const reportSchema = new mongoose.Schema(
       required: true,
       ref: "Employee",
     },
+    isApproved: {
+      type: Boolean,
+    },
     createdAt: {
       type: Date,
       required: true,

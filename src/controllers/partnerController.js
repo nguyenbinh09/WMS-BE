@@ -73,9 +73,7 @@ const partnerController = {
 
   getAllPartner: async (req, res) => {
     try {
-      const partners = await Partner.find({ isDeleted: false }).populate([
-        "contactId",
-      ]);
+      const partners = await Partner.find().populate(["contactId"]);
       if (!partners) {
         return res.status(404).send("Not found any partners");
       }
