@@ -88,13 +88,11 @@ const transferController = {
 
   getTransferByFromWarehouseId: async (req, res) => {
     try {
-      const { id } = req.params.fromWarehouseId;
-      const transfers = await Transfer.find({ fromWarehouse: id }).populate([
-        "fromWarehouse",
-        "toWarehouse",
-        "products",
-        "employees",
-      ]);
+      const { fromWarehouseId } = req.params;
+      console.log(fromWarehouseId);
+      const transfers = await Transfer.find({
+        fromWarehouse: fromWarehouseId,
+      }).populate(["fromWarehouse", "toWarehouse", "products", "employees"]);
       if (!transfers) {
         return res.status(500).send("Not found any tranfers");
       }
@@ -106,13 +104,10 @@ const transferController = {
 
   getTransferByToWarehouseId: async (req, res) => {
     try {
-      const { id } = req.params.toWarehouseId;
-      const transfers = await Transfer.find({ toWarehouse: id }).populate([
-        "fromWarehouse",
-        "toWarehouse",
-        "products",
-        "employees",
-      ]);
+      const { toWarehouseId } = req.params;
+      const transfers = await Transfer.find({
+        toWarehouse: toWarehouseId,
+      }).populate(["fromWarehouse", "toWarehouse", "products", "employees"]);
       if (!transfers) {
         return res.status(500).send("Not found any tranfers");
       }
