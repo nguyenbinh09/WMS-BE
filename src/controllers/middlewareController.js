@@ -23,7 +23,7 @@ const middlewareController = {
   authorizeAdmin: (req, res, next) => {
     middlewareController.verifyToken(req, res, async () => {
       const user = await User.findById(req.user.id);
-      if (user.isEmployee !== true) {
+      if (user.isEmployee === false) {
         next();
       } else {
         return res.status(403).json("You're not authorized!");
