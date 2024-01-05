@@ -78,7 +78,43 @@ const transferController = {
         "employees",
       ]);
       if (!transfers) {
-        return res.status(500).send("Not found any warehouses");
+        return res.status(500).send("Not found any transfer");
+      }
+      res.status(200).json(transfers);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getTransferByFromWarehouseId: async (req, res) => {
+    try {
+      const { id } = req.params.fromWarehouseId;
+      const transfers = await Transfer.find({ fromWarehouse: id }).populate([
+        "fromWarehouse",
+        "toWarehouse",
+        "products",
+        "employees",
+      ]);
+      if (!transfers) {
+        return res.status(500).send("Not found any tranfers");
+      }
+      res.status(200).json(transfers);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
+  getTransferByToWarehouseId: async (req, res) => {
+    try {
+      const { id } = req.params.toWarehouseId;
+      const transfers = await Transfer.find({ toWarehouse: id }).populate([
+        "fromWarehouse",
+        "toWarehouse",
+        "products",
+        "employees",
+      ]);
+      if (!transfers) {
+        return res.status(500).send("Not found any tranfers");
       }
       res.status(200).json(transfers);
     } catch (error) {
