@@ -6,17 +6,12 @@ const mongoose = require("mongoose");
 const cloudinary = require("../utils/helper");
 const { compareSync } = require("bcrypt");
 
-const skuCodeGenerator = async (name, warehouseId, session) => {
+const skuCodeGenerator = async (name, session) => {
   const firstValue = name.substring(0, 2);
-  const warehouse = await Warehouse.findOne({ _id: warehouseId }).session(
-    session
-  );
-  const secondValue = warehouse.code.substring(0, 2);
-  const productAmount = await Product.countDocuments();
-  const count = String(productAmount).padStart(4, "0");
-  const sku = firstValue + count + secondValue;
+  const productAmount = await Product.countDocuments().session(session);
+  const count = String(productAmount).padStart(6, "0");
+  const sku = firstValue + count;
   const sku1 = sku.toUpperCase();
-  console.log(sku1);
   return sku1;
 };
 

@@ -215,10 +215,10 @@ const authController = {
   //reset password
   changePassword: async (req, res, next) => {
     try {
-      const { newPassword, oldPassword, otp } = req.body;
+      const { newPassword, oldPassword } = req.body;
       console.log(newPassword, oldPassword);
-      if (!newPassword || !oldPassword || !otp.trim())
-        throw new BadRequestError("Invalid request!");
+      if (!newPassword || !oldPassword)
+        return res.status(401).send("Invalid request!");
 
       const { id } = req.params;
       const user = await User.findById(id);
@@ -226,12 +226,6 @@ const authController = {
         "contactId"
       );
       if (!user) return res.status(404).send("User not found!");
-
-      const token = await ResetToken.findOne({ owner: user._id });
-      if (!token) return res.status(404).send("User not found!");
-      const isMatched = await token.compareToken(otp);
-      if (!isMatched)
-        return res.status(401).send("Please provide a valid OTP!");
 
       const isSameOldPassword = await user.comparePassword(oldPassword);
       if (!isSameOldPassword)
@@ -251,16 +245,6 @@ const authController = {
       }
 
       user.password = newPassword.trim();
-      await user.save();
-
-      await ResetToken.findOneAndDelete({ owner: user._id });
-
-      mailTransport().sendMail({
-        from: process.env.MAILTRAN_USERNAME,
-        to: employee.contactId.email,
-        subject: "Change Password Successfully",
-        html: ResetPasswordTemplate(),
-      });
 
       res
         .status(200)
@@ -299,8 +283,8 @@ const authController = {
       mailTransport().sendMail({
         from: process.env.MAILTRAN_USERNAME,
         to: employee.contactId.email,
-        subject: "Change Password Successfully",
-        html: OTPTemplate(),
+        subject: "Otp to reset your password",
+        html: OTPTemplate(OTP),
       });
 
       res.status(200).json(result);
@@ -324,12 +308,6 @@ const authController = {
       if (!isMatched)
         return res.status(401).send("Please provide a valid OTP!");
 
-      const isSamePassword = await user.comparePassword(password);
-      if (isSamePassword)
-        return res
-          .status(401)
-          .send("New password must be different from the old one!");
-
       // validate password
       const validateResult = passwordSchema.validate(password.trim(), {
         details: true,
@@ -341,13 +319,6 @@ const authController = {
       user.password = password.trim();
       await user.save();
       await ResetToken.findOneAndDelete({ owner: user.id });
-
-      mailTransport().sendMail({
-        from: "HRManagement2003@gmail.com",
-        to: user.email,
-        subject: "Password Reset Successfully",
-        html: ResetPasswordTemplate(url),
-      });
 
       res
         .status(200)

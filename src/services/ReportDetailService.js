@@ -31,13 +31,6 @@ const createReportDetail = async (
         message: `Product with id ${productId} is deleted`,
       };
     }
-    if (differenceQuantity !== 0) {
-      await Product.findByIdAndUpdate(
-        product._id,
-        { $set: { quantity: actualQuantity } },
-        { new: true }
-      ).session(session);
-    }
     const newReportDetail = new ReportDetail(
       {
         productId,

@@ -15,4 +15,11 @@ router.post(
   middlewareController.verifyToken,
   authController.logoutUser
 );
+router.post("/forgotPassword", authController.forgotPassword);
+router.post("/resetPassword", authController.resetPassword);
+router.post(
+  "/changePassword",
+  middlewareController.verifyToken,
+  authController.changePassword
+);
 module.exports = router;
