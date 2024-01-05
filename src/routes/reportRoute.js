@@ -8,4 +8,5 @@ router.get(
   "/byWarehouse/:warehouseId",
   reportController.getReportByWarehouseId
 );
+router.put("/:id", reportController.updateApproval);
 module.exports = router;

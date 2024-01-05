@@ -2,13 +2,12 @@ const mongoose = require("mongoose");
 const Warehouse = require("../models/warehouseModel");
 const Report = require("../models/reportModel");
 const createReportDetail = require("../services/ReportDetailService");
+const Product = require("../models/productModel");
 
-const generateReportCode = async (warehouseId, session) => {
-  const warehouse = await Warehouse.findById(warehouseId).session(session);
-  const warehouseCode = warehouse.code;
-  const reportAmount = await Report.countDocuments();
-  const reportAmountStr = String(reportAmount).padStart(4, "0");
-  const reportCode = "INV" + reportAmountStr + warehouseCode;
+const generateReportCode = async (session) => {
+  const reportAmount = await Report.countDocuments().session(session);
+  const reportAmountStr = String(reportAmount).padStart(6, "0");
+  const reportCode = "INV" + reportAmountStr;
   return reportCode;
 };
 
@@ -80,6 +79,55 @@ const reportController = {
     }
   },
 
+  updateApproval: async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const { isApproved } = req.body;
+      const { id } = req.params;
+      const report = await Report.findById(id)
+        .populate("reportDetails")
+        .session(session);
+      const details = report.reportDetails;
+      if (isApproved === true) {
+        for (i = 0; i < details.length; i++) {
+          if (details[i].differenceQuantity !== 0) {
+            await Product.findByIdAndUpdate(
+              details[i].productId,
+              { $set: { quantity: details[i].actualQuantity } },
+              { new: true }
+            ).session(session);
+          }
+        }
+      }
+      await Report.findByIdAndUpdate(
+        id,
+        { $set: { isApproved: isApproved } },
+        { new: true }
+      ).session(session);
+      if (isApproved) {
+        res.status(201).json({
+          success: true,
+          message: `Inventory report ${report.code} has been approved!`,
+        });
+      } else {
+        res.status(201).json({
+          success: true,
+          message: `Inventory report ${report.code} has been rejected!`,
+        });
+      }
+      await session.commitTransaction();
+    } catch (error) {
+      // Rollback any changes made in the database
+      await session.abortTransaction();
+      // Rethrow the error
+      return res.status(500).json(error);
+    } finally {
+      // Ending the session
+      await session.endSession();
+    }
+  },
+
   getAllReport: async (req, res) => {
     try {
       const reports = await Report.find().populate([
@@ -90,7 +138,6 @@ const reportController = {
       if (!reports) {
         return res.status(404).send("Not found any reports");
       }
-
       res.status(200).json(reports);
     } catch (error) {
       return res.status(500).json(error);
@@ -106,7 +153,6 @@ const reportController = {
       if (!reports) {
         return res.status(404).send("Not found any reports");
       }
-
       res.status(200).json(reports);
     } catch (error) {
       return res.status(500).json(error);

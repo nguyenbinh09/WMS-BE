@@ -13,6 +13,7 @@ const employeeRoute = require("./routes/employeeRoute");
 const transactionRoute = require("./routes/transactionRoute");
 const partnerRoute = require("./routes/partnerRoute");
 const reportRoute = require("./routes/reportRoute");
+const transferRoute = require("./routes/transferRoute");
 
 //Connect DB
 mongoose
@@ -41,6 +42,7 @@ app.use("/api/employee", employeeRoute);
 app.use("/api/transaction", transactionRoute);
 app.use("/api/partner", partnerRoute);
 app.use("/api/report", reportRoute);
+app.use("/api/transfer", transferRoute);
 
 app.listen(port, () => {
   console.log("Server is running in port ", +port);
