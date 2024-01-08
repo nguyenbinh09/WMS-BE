@@ -5,7 +5,7 @@ const createReportDetail = require("../services/ReportDetailService");
 const Product = require("../models/productModel");
 
 const generateReportCode = async (session) => {
-  const reportAmount = await Report.countDocuments().session(session);
+  const reportAmount = await Report.countDocuments();
   const reportAmountStr = String(reportAmount).padStart(6, "0");
   const reportCode = "INV" + reportAmountStr;
   return reportCode;

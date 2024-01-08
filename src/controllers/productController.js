@@ -6,9 +6,9 @@ const mongoose = require("mongoose");
 const cloudinary = require("../utils/helper");
 const { compareSync } = require("bcrypt");
 
-const skuCodeGenerator = async (name, session) => {
+const skuCodeGenerator = async (name) => {
   const firstValue = name.substring(0, 2);
-  const productAmount = await Product.countDocuments().session(session);
+  const productAmount = await Product.countDocuments();
   const count = String(productAmount).padStart(6, "0");
   const sku = firstValue + count;
   const sku1 = sku.toUpperCase();
