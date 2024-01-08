@@ -179,15 +179,11 @@ const authController = {
   changePassword: async (req, res, next) => {
     try {
       const { newPassword, oldPassword } = req.body;
-      console.log(newPassword, oldPassword);
       if (!newPassword || !oldPassword)
         return res.status(401).send("Invalid request!");
 
       const { id } = req.params;
       const user = await User.findById(id);
-      const employee = await Employee.findById(user.employeeId).populate(
-        "contactId"
-      );
       if (!user) return res.status(404).send("User not found!");
 
       const isSameOldPassword = await user.comparePassword(oldPassword);
