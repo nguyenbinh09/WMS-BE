@@ -16,9 +16,9 @@ router.post(
   authController.logoutUser
 );
 router.post("/forgotPassword", authController.forgotPassword);
-router.post("/resetPassword", authController.resetPassword);
+router.post("/resetPassword/:id", authController.resetPassword);
 router.post(
-  "/changePassword",
+  "/changePassword/:id",
   middlewareController.verifyToken,
   authController.changePassword
 );
