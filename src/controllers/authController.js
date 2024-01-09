@@ -240,10 +240,12 @@ const authController = {
       if (!contact) {
         return res.status(404).send("Email not found, invalid request");
       }
+      console.log(contact);
       const employee = await Employee.findOne({ contactId: contact._id });
+      console.log(employee);
       const user = await User.findOne({ employeeId: employee._id });
       if (!user) return res.status(404).send("User not found, invalid request");
-
+      console.log(user);
       const token = authController.generateToken(user);
 
       const url = "https://github.com/nguyenbinh09/WMS-BE";
