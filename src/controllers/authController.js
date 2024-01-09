@@ -84,12 +84,24 @@ const authController = {
     }
   },
 
+  //GENERATE TOKEN
+  generateToken: (user) => {
+    return jwt.sign(
+      {
+        id: user._id,
+        isEmployee: user.isEmployee,
+      },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "15m" }
+    );
+  },
+
   //GENERATE ACCESS TOKEN
   generateAccessToken: (user) => {
     return jwt.sign(
       {
-        id: user.id,
-        role: user.role,
+        id: user._id,
+        isEmployee: user.isEmployee,
       },
       process.env.JWT_ACCESS_KEY,
       { expiresIn: "2h" }
@@ -100,8 +112,8 @@ const authController = {
   generateFreshToken: (user) => {
     return jwt.sign(
       {
-        id: user.id,
-        role: user.role,
+        id: user._id,
+        isEmployee: user.isEmployee,
       },
       process.env.JWT_REFRESH_KEY,
       { expiresIn: "365d" }
@@ -185,7 +197,6 @@ const authController = {
       const { id } = req.params;
       const user = await User.findById(id);
       if (!user) return res.status(404).send("User not found!");
-
       const isSameOldPassword = await user.comparePassword(oldPassword);
       if (!isSameOldPassword)
         return res.status(401).send("Wrong password. Please check it again.");
@@ -203,7 +214,15 @@ const authController = {
         return res.status(401).send(validateResult);
       }
 
-      user.password = newPassword.trim();
+      const saltRounds = 10;
+      const salt = bcrypt.genSaltSync(saltRounds);
+      const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+      await User.findByIdAndUpdate(
+        id,
+        { $set: { password: hashedPassword } },
+        { new: true }
+      );
 
       res
         .status(200)
@@ -216,21 +235,27 @@ const authController = {
   //forgot password
   forgotPassword: async (req, res) => {
     try {
-      const { email, url } = req.body;
+      const { email } = req.body;
       const contact = await ContactInfo.findOne({ email: email });
-      const employee = await Employee.findById(contact._id);
-      const user = await User.findById(employee._id);
+      if (!contact) {
+        return res.status(404).send("Email not found, invalid request");
+      }
+      const employee = await Employee.findOne({ contactId: contact._id });
+      const user = await User.findOne({ employeeId: employee._id });
       if (!user) return res.status(404).send("User not found, invalid request");
 
+      const token = authController.generateToken(user);
+
+      const url = "https://github.com/nguyenbinh09/WMS-BE";
       // send a mail that contain link to reset password
       mailTransport().sendMail({
         from: process.env.MAILTRAN_USERNAME,
-        to: employee.contactId.email,
+        to: email,
         subject: "Link Reset Password",
         html: ResetPasswordTemplate(url),
       });
 
-      res.status(200).json(result);
+      res.status(200).json("Please check your email to reset password!");
     } catch (err) {
       return res.status(500).send(err);
     }
@@ -240,10 +265,13 @@ const authController = {
   resetPassword: async (req, res) => {
     try {
       const { password } = req.body;
+      const { id } = req.params;
       if (!password) return res.status(401).send("Invalid request!");
 
-      const user = await User.findById(req.params.id);
+      const user = await User.findById(id);
       if (!user) return res.status(404).send("User not found!");
+
+      // const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
       // validate password
       const validateResult = passwordSchema.validate(password.trim(), {
@@ -252,10 +280,15 @@ const authController = {
       if (validateResult.length !== 0) {
         return res.status(401).send(validateResult);
       }
+      const saltRounds = 10;
+      const salt = bcrypt.genSaltSync(saltRounds);
+      const hashedPassword = bcrypt.hashSync(password, salt);
 
-      user.password = password.trim();
-      await user.save();
-      await ResetToken.findOneAndDelete({ owner: user.id });
+      await User.findByIdAndUpdate(
+        id,
+        { $set: { password: hashedPassword } },
+        { new: true }
+      );
 
       res
         .status(200)
