@@ -84,18 +84,6 @@ const authController = {
     }
   },
 
-  //GENERATE TOKEN
-  generateToken: (user) => {
-    return jwt.sign(
-      {
-        id: user._id,
-        isEmployee: user.isEmployee,
-      },
-      process.env.JWT_SECRET_KEY,
-      { expiresIn: "15m" }
-    );
-  },
-
   //GENERATE ACCESS TOKEN
   generateAccessToken: (user) => {
     return jwt.sign(
@@ -246,7 +234,6 @@ const authController = {
       const user = await User.findOne({ employeeId: employee._id });
       if (!user) return res.status(404).send("User not found, invalid request");
       console.log(user);
-      const token = authController.generateToken(user);
 
       const url = "https://github.com/nguyenbinh09/WMS-BE";
       // send a mail that contain link to reset password
