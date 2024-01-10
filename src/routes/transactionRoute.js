@@ -3,6 +3,10 @@ const router = require("express").Router();
 
 router.post("/", transactionController.addTransaction);
 router.get("/", transactionController.getAllTransactions);
+router.get(
+  "/byWarehouse/:warehouseId",
+  transactionController.getTransactionsByWarehouseId
+);
 router.get("/inbound", transactionController.getAllInbound);
 router.get(
   "/inbound/byWarehouse/:warehouseId",

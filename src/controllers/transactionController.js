@@ -105,6 +105,27 @@ const transactionController = {
     }
   },
 
+  getTransactionsByWarehouseId: async (req, res) => {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const transactions = await Transaction.find({
+        warehouseId: warehouseId,
+        isDeleted: false,
+      }).populate([
+        "transactionDetails",
+        "employeeId",
+        "warehouseId",
+        "partnerId",
+      ]);
+      if (!transactions) {
+        return res.status(404).send("Not found any transactions");
+      }
+      res.status(200).json(transactions);
+    } catch (error) {
+      return res.status(500).json(error);
+    }
+  },
+
   getAllInbound: async (req, res) => {
     try {
       const inboundTransactions = await Transaction.find({

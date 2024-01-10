@@ -10,7 +10,7 @@ const User = require("../models/userModel");
 const generateEmployeeCode = async (warehouseId, position, session) => {
   {
     const employeePosition = position.toUpperCase().substring(0, 3);
-    const employeeAmount = await Employee.countDocuments().session(session);
+    const employeeAmount = await Employee.countDocuments();
     const employeeAmountStr = String(employeeAmount).padStart(4, "0");
     const employeeCode = employeePosition + employeeAmountStr;
     return employeeCode;
