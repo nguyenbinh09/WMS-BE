@@ -268,7 +268,7 @@ const employeeController = {
         );
       }
       //edit email
-      if (email) {
+      if (email && email !== employee.contactId.email) {
         const contact = await ContactInfo.findOne({
           email: email,
           isDeleted: false,

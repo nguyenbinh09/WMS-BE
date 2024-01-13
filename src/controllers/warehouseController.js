@@ -150,7 +150,9 @@ const warehouseController = {
         address,
       } = req.body;
       const { id } = req.params;
-      const warehouse = await Warehouse.findById(id).session(session);
+      const warehouse = await Warehouse.findById(id)
+        .session(session)
+        .populate("contactId");
       if (!warehouse)
         return res
           .status(404)
@@ -177,7 +179,6 @@ const warehouseController = {
           manager.warehouseId &&
           managerId !== warehouse.managerId.toString()
         ) {
-          console.log(managerId !== warehouse.managerId.toString());
           return res
             .status(400)
             .send(
@@ -219,7 +220,7 @@ const warehouseController = {
           { new: true }
         ).session(session);
       }
-      if (email) {
+      if (email && email !== warehouse.contactId.email) {
         if (email) {
           const contact = await ContactInfo.findOne({
             email: email,

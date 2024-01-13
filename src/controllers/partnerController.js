@@ -155,7 +155,7 @@ const partnerController = {
       const { name, email, phone_num, address } = req.body;
       const partner = await Partner.findById(id);
       if (email) {
-        if (email) {
+        if (email && email !== partner.contactId.email) {
           const contact = await ContactInfo.findOne({
             email: email,
             isDeleted: false,
