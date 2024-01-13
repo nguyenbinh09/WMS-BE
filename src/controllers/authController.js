@@ -232,7 +232,7 @@ const authController = {
       const user = await User.findOne({ employeeId: employee._id });
       if (!user) return res.status(404).send("User not found, invalid request");
 
-      const url = "https://github.com/nguyenbinh09/WMS-BE";
+      const url = `https://wms-d07k.onrender.com/auth/reset/${user._id}`;
       // send a mail that contain link to reset password
       mailTransport().sendMail({
         from: process.env.MAILTRAN_USERNAME,
